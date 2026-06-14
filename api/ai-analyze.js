@@ -57,29 +57,34 @@ module.exports = async function handler(req, res) {
 
   const client = new Anthropic({ apiKey });
 
-  const message = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: mimeType || "image/jpeg",
-              data: imageBase64,
+  let message;
+  try {
+    message = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: mimeType || "image/jpeg",
+                data: imageBase64,
+              },
             },
-          },
-          {
-            type: "text",
-            text: PROMPTS[mode],
-          },
-        ],
-      },
-    ],
-  });
+            {
+              type: "text",
+              text: PROMPTS[mode],
+            },
+          ],
+        },
+      ],
+    });
+  } catch (e) {
+    return res.status(502).json({ error: "Anthropic API error", detail: e.message });
+  }
 
   const text = message.content[0].text;
   const match = text.match(/\{[\s\S]*\}/);
