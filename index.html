@@ -1467,6 +1467,13 @@ const LEGACY_KEY = "closet-manager-items";
 const SKU_COUNTER_KEY = "item-studio-sku-counter";
 const DEFAULT_STATUSES = ["撮影待ち", "採寸待ち", "登録待ち", "出品中", "販売済", "発送待ち", "完了", "保留"];
 const DEFAULT_CHANNELS = ["メルカリ", "BASE", "Etsy", "Instagram", "Mikke bazaar", "委託先", "ラクマ", "その他"];
+const BASE_TOKEN_KEY = "item-studio-base-token";
+const BASE_AUTH_CLIENT_ID = "aeb6af613d18a2855aade12fa99c2dc4";
+const BASE_CALLBACK_URL = "https://joesstylea-svg.github.io/item-studio/callback";
+const SUPABASE_URL = "https://bneaeojlgnnchywqbwcb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuZWFlb2psZ25uY2h5d3Fid2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzOTU2NTYsImV4cCI6MjA5NTk3MTY1Nn0.yIB506EpzU98PWf-haHQO1bfojfn8bNJDmr6FARn-P4";
+const SUPABASE_BUCKET = "item-studio";
+const VERCEL_API = "https://item-studio-api.vercel.app";
 const NAV = [
   ["home", "ホーム", "home"],
   ["add", "追加", "plus"],
@@ -1718,6 +1725,7 @@ function normalizeItem(item = {}) {
     channels,
     customValues: item.customValues || {},
     description: item.description || "",
+    platforms: item.platforms || {},
     createdAt: item.createdAt || Date.now(),
     updatedAt: item.updatedAt || Date.now()
   };
@@ -2473,13 +2481,14 @@ function renderItemList() {
 
 function itemCard(item) {
   const channels = (item.channels || []).filter(ch => ch.channelName).slice(0, 5);
+  const baseBadge = item.platforms?.base ? `<span class="tag blue" style="font-size:10px;padding:3px 8px;">BASE</span>` : "";
   return `<article class="item-card card">
     <div class="photo" onclick="openDetail('${item.id}')">${item.images[0] ? `<img src="${item.images[0]}" alt="">` : ""}<span class="tag ${statusClass(item.status)}" style="position:absolute;left:10px;bottom:10px;">${escapeHtml(item.status)}</span></div>
     <div class="body">
       <div class="muted">No.${escapeHtml(item.sku)}</div>
       <div class="title">${escapeHtml(item.title || "無題のアイテム")}</div>
       <div class="meta">${escapeHtml(item.location || "保管場所未設定")} / ${escapeHtml(item.owner || "担当未設定")}</div>
-      <div class="chips">${channels.map(ch => `<span class="tag ${ch.status === "出品中" ? "blue" : ch.status === "売却済" ? "orange" : "gray"}">${escapeHtml(ch.channelName)}</span>`).join("")}</div>
+      <div class="chips">${baseBadge}${channels.map(ch => `<span class="tag ${ch.status === "出品中" ? "blue" : ch.status === "売却済" ? "orange" : "gray"}">${escapeHtml(ch.channelName)}</span>`).join("")}</div>
     </div>
     <div class="foot"><span class="price">${yen(item.price)}</span><button class="btn ghost small" onclick="openDetail('${item.id}')">詳細</button></div>
   </article>`;
@@ -2539,6 +2548,22 @@ function openDetail(id) {
       <button class="btn primary" style="margin-top:12px;width:100%;" onclick="saveMemo('${item.id}')">メモを保存</button>
     </div>`;
 
+  const tabPlatform = `
+    <div style="margin-top:14px;display:grid;gap:12px;">
+      ${item.platforms?.base
+        ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--blue-soft);border-radius:var(--radius);">
+             <span style="font-size:13px;font-weight:500;color:#2D5FAC;">BASE出品済 ✓ &nbsp;${escapeHtml(item.platforms.base.listedAt || "")}</span>
+             <a href="${escapeHtml(item.platforms.base.url || "")}" target="_blank" class="btn ghost small" style="min-height:32px;font-size:12px;">管理画面を開く</a>
+           </div>`
+        : ""}
+      <button class="btn blue" id="base-list-btn" onclick="listOnBase('${item.id}')" style="min-height:52px;">
+        ${item.platforms?.base ? "BASEに再出品" : "BASEに出品する"}
+      </button>
+      <button class="btn" onclick="copyForMinne('${item.id}')" style="min-height:52px;">
+        minneテキストをコピー
+      </button>
+    </div>`;
+
   $("modal-title").textContent = `No.${item.sku}`;
   $("modal-body").innerHTML = `
     <div class="detail-studio">
@@ -2561,6 +2586,7 @@ function openDetail(id) {
           <button class="active" data-tab="detail">詳細情報</button>
           <button data-tab="channels">販売先</button>
           <button data-tab="memo">メモ</button>
+          <button data-tab="publish">出品</button>
         </div>
         <div id="detail-tab-content">${tabDetail}</div>
         <div class="detail-actions">
@@ -2579,7 +2605,7 @@ function openDetail(id) {
   `;
 
   // タブ切り替えイベント登録
-  const tabContents = { detail: tabDetail, channels: tabChannels, memo: tabMemo };
+  const tabContents = { detail: tabDetail, channels: tabChannels, memo: tabMemo, publish: tabPlatform };
   document.querySelectorAll("#detail-tabs button").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll("#detail-tabs button").forEach(b => b.classList.remove("active"));
@@ -2789,6 +2815,10 @@ function renderSettings() {
       <div class="section-row"><h3>カスタム項目</h3><button class="btn small" onclick="addCustomFieldSetting()">追加</button></div>
       <div id="custom-field-settings" class="custom-list">${state.customFields.map(customFieldRow).join("") || `<div class="hint">例: 委託先、作家名、賞味期限、予約日、材料費、棚番号、イベント名</div>`}</div>
     </section>
+    <section class="form-card" style="margin-top:16px;">
+      <div class="section-row"><h3>BASE連携</h3><span class="muted">アイテム詳細の「出品」タブからBASEへ直接出品できます</span></div>
+      <div id="base-auth-status">${baseAuthStatus()}</div>
+    </section>
   `;
   $("set-sku-mode").value = state.settings.skuMode;
 }
@@ -2843,9 +2873,279 @@ function saveSettings() {
   renderSettings();
 }
 
+// ===== BASE / Supabase / minne 連携 =====
+
+function getBaseToken() {
+  try { return JSON.parse(localStorage.getItem(BASE_TOKEN_KEY) || "null"); } catch { return null; }
+}
+
+function saveBaseToken(data) {
+  const expiresAt = Date.now() + (data.expires_in || 3600) * 1000;
+  localStorage.setItem(BASE_TOKEN_KEY, JSON.stringify({
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    expiresAt
+  }));
+}
+
+async function getValidAccessToken() {
+  const token = getBaseToken();
+  if (!token) return null;
+  if (token.expiresAt - Date.now() > 5 * 60 * 1000) return token.accessToken;
+  if (!token.refreshToken) return null;
+  try {
+    const res = await fetch(VERCEL_API + "/api/base-auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: token.refreshToken })
+    });
+    if (!res.ok) throw new Error("refresh failed");
+    const data = await res.json();
+    saveBaseToken(data);
+    return data.access_token;
+  } catch {
+    return null;
+  }
+}
+
+function baseAuthStatus() {
+  const token = getBaseToken();
+  if (!token) {
+    return `
+      <div class="hint" style="margin-bottom:14px;">BASEにログインして連携します。連携後、アイテム詳細「出品」タブから直接出品できます。</div>
+      <button class="btn blue" onclick="startBaseOAuth()" style="min-height:48px;width:100%;">BASEでログインして連携する</button>`;
+  }
+  const expired = token.expiresAt < Date.now();
+  const expireStr = new Date(token.expiresAt).toLocaleString("ja-JP");
+  return `
+    <div class="info-list">
+      <div class="info-row">
+        <div class="key">状態</div>
+        <div><span class="tag ${expired ? "orange" : "blue"}">${expired ? "期限切れ" : "連携済"}</span></div>
+      </div>
+      <div class="info-row">
+        <div class="key">有効期限</div>
+        <div style="font-size:13px;">${expireStr}</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <button class="btn blue" onclick="startBaseOAuth()" style="min-height:48px;">${expired ? "再連携する" : "再連携する"}</button>
+      <button class="btn ghost" onclick="disconnectBase()" style="min-height:48px;">連携を解除</button>
+    </div>`;
+}
+
+function disconnectBase() {
+  if (!confirm("BASE連携を解除しますか？")) return;
+  localStorage.removeItem(BASE_TOKEN_KEY);
+  toast("BASE連携を解除しました");
+  renderSettings();
+}
+
+function startBaseOAuth() {
+  const params = new URLSearchParams({
+    response_type: "code",
+    client_id: BASE_AUTH_CLIENT_ID,
+    redirect_uri: BASE_CALLBACK_URL,
+    scope: "read_items write_items"
+  });
+  const popup = window.open(
+    "https://api.thebase.in/1/oauth/authorize?" + params.toString(),
+    "base-oauth",
+    "width=620,height=720,scrollbars=yes,resizable=yes"
+  );
+
+  const msgHandler = (e) => {
+    if (e.data?.type === "base-oauth-code" && e.data.code) {
+      window.removeEventListener("message", msgHandler);
+      clearInterval(poll);
+      handleBaseOAuthCode(e.data.code);
+    }
+  };
+  window.addEventListener("message", msgHandler);
+
+  const poll = setInterval(() => {
+    if (!popup || popup.closed) {
+      clearInterval(poll);
+      window.removeEventListener("message", msgHandler);
+      const code = localStorage.getItem("base-oauth-pending-code");
+      if (code) {
+        localStorage.removeItem("base-oauth-pending-code");
+        handleBaseOAuthCode(code);
+      }
+    }
+  }, 600);
+}
+
+async function handleBaseOAuthCode(code) {
+  toast("BASE連携中...");
+  try {
+    const res = await fetch(VERCEL_API + "/api/base-auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "認証に失敗しました");
+    saveBaseToken(data);
+    toast("BASE連携が完了しました！");
+    renderSettings();
+  } catch (e) {
+    toast("BASE連携に失敗しました: " + e.message);
+  }
+}
+
+function checkBaseCallback() {
+  const params = new URLSearchParams(location.search);
+  const code = params.get("base_code");
+  if (code) {
+    history.replaceState({}, "", location.pathname);
+    handleBaseOAuthCode(code);
+  }
+}
+
+function stripEmoji(text) {
+  return String(text || "")
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu, "")
+    .replace(/[\u{2600}-\u{27BF}]/gu, "")
+    .replace(/[\u{FE00}-\u{FEFF}]/gu, "")
+    .trim();
+}
+
+async function uploadToSupabase(itemNo, imageDataUrl) {
+  const base64 = imageDataUrl.split(",")[1];
+  const byteStr = atob(base64);
+  const buf = new ArrayBuffer(byteStr.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < byteStr.length; i++) view[i] = byteStr.charCodeAt(i);
+  const blob = new Blob([buf], { type: "image/jpeg" });
+
+  const path = `photos/${itemNo}/${Date.now()}.jpg`;
+  const res = await fetch(
+    `${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${path}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "image/jpeg",
+        "x-upsert": "true"
+      },
+      body: blob
+    }
+  );
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error("画像アップロード失敗: " + err);
+  }
+  return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${path}`;
+}
+
+async function listOnBase(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+
+  const accessToken = await getValidAccessToken();
+  if (!accessToken) {
+    toast("BASE連携が必要です。設定からBASEにログインしてください。");
+    closeModal();
+    switchTab("settings");
+    return;
+  }
+
+  const price = Number(item.price || 0);
+  if (price < 100) {
+    toast("販売価格を100円以上に設定してください");
+    return;
+  }
+
+  const title = stripEmoji(item.title || "");
+  if (!title) {
+    toast("商品名を設定してください");
+    return;
+  }
+
+  const rasterImages = (item.images || []).filter(isRasterImage);
+  if (!rasterImages.length) {
+    toast("出品できる写真がありません（補正済みの写真を追加してください）");
+    return;
+  }
+
+  const btn = document.getElementById("base-list-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "出品中..."; }
+
+  try {
+    toast("画像をアップロード中...");
+    const imageUrls = [];
+    for (const dataUrl of rasterImages.slice(0, 5)) {
+      const url = await uploadToSupabase(item.sku, dataUrl);
+      imageUrls.push(url);
+    }
+
+    toast("BASEに出品中...");
+    const detail = stripEmoji(item.description || generateDescription(item));
+    const res = await fetch(VERCEL_API + "/api/base-upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        accessToken,
+        itemData: { title, detail, price, stock: 1, identifier: String(item.sku) },
+        imageUrls
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.status === 401) {
+      localStorage.removeItem(BASE_TOKEN_KEY);
+      toast("BASEのトークンが期限切れです。設定から再連携してください。");
+      if (btn) { btn.disabled = false; btn.textContent = "BASEに出品する"; }
+      return;
+    }
+    if (!res.ok) throw new Error(data.error || "BASE出品に失敗しました");
+
+    item.platforms = item.platforms || {};
+    item.platforms.base = { id: data.baseItemId, url: data.baseUrl, listedAt: todayKey() };
+    item.updatedAt = Date.now();
+    save();
+
+    toast("BASEに出品しました！");
+    openDetail(id);
+    if (document.getElementById("items-list")) renderItemList();
+  } catch (e) {
+    toast("出品に失敗しました: " + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = item.platforms?.base ? "BASEに再出品" : "BASEに出品する"; }
+  }
+}
+
+function copyForMinne(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  const m = item.measurements || {};
+  const sizeStr = [m.sizeLabel, m.other].filter(Boolean).join(" / ");
+  const lines = [
+    `【商品名】${item.title || ""}`,
+    "",
+    item.material ? `【素材】${item.material}` : null,
+    sizeStr ? `【サイズ】${sizeStr}` : null,
+    item.color ? `【カラー】${item.color}` : null,
+    `【品番】${item.sku}`,
+    "",
+    "【説明】",
+    item.description || generateDescription(item),
+    "",
+    "【注意事項】",
+    "・ハンドメイド品のため個体差があります",
+    "・モニターにより色味が異なる場合があります"
+  ].filter(v => v !== null);
+  navigator.clipboard.writeText(lines.join("\n"))
+    .then(() => toast("minne用テキストをコピーしました"));
+}
+
+// ===== ここまで追加 =====
+
 load();
 renderNav();
 renderHome();
+checkBaseCallback();
 </script>
 <datalist id="channel-options">
   <option value="メルカリ"></option>

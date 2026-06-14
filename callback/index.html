@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BASE連携 - Item Studio</title>
+<style>
+  body { font-family: "Noto Sans JP", system-ui, sans-serif; background: #F5F2EC; margin: 0; display: grid; place-items: center; min-height: 100vh; }
+  .card { background: #fff; border-radius: 16px; padding: 40px 32px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,.08); }
+  .icon { font-size: 48px; margin-bottom: 16px; }
+  h1 { font-size: 20px; margin: 0 0 12px; color: #262626; }
+  p { color: #8E8E8E; font-size: 14px; line-height: 1.7; margin: 0 0 24px; }
+  .btn { display: inline-block; background: #F28C52; color: white; border-radius: 12px; padding: 14px 28px; font-size: 14px; font-weight: 600; text-decoration: none; }
+  .error { color: #b43b2b; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="content">
+    <div class="icon">⏳</div>
+    <h1>連携中...</h1>
+    <p>Item Studioに認証情報を送信しています。</p>
+  </div>
+</div>
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const code = params.get("code");
+  const error = params.get("error");
+  const content = document.getElementById("content");
+
+  if (error) {
+    content.innerHTML = '<div class="icon">❌</div><h1 class="error">連携に失敗しました</h1><p>' + error + '</p><a href="https://joesstylea-svg.github.io/item-studio/" class="btn">Item Studioに戻る</a>';
+    return;
+  }
+
+  if (!code) {
+    content.innerHTML = '<div class="icon">❓</div><h1>コードが見つかりません</h1><p>BASEから正しくリダイレクトされませんでした。</p><a href="https://joesstylea-svg.github.io/item-studio/" class="btn">Item Studioに戻る</a>';
+    return;
+  }
+
+  // Store code in localStorage so the main window can pick it up
+  try { localStorage.setItem("base-oauth-pending-code", code); } catch (e) {}
+
+  // Try postMessage to opener (works when same origin or cross-origin with *)
+  if (window.opener && !window.opener.closed) {
+    try {
+      window.opener.postMessage({ type: "base-oauth-code", code: code }, "*");
+      content.innerHTML = '<div class="icon">✅</div><h1>連携が完了しました</h1><p>このウィンドウを閉じてItem Studioに戻ってください。</p>';
+      setTimeout(function () { window.close(); }, 1500);
+      return;
+    } catch (e) {}
+  }
+
+  // Fallback: redirect back with code as query param
+  content.innerHTML = '<div class="icon">✅</div><h1>認証コードを取得しました</h1><p>下のボタンを押してItem Studioに戻ってください。</p><a href="https://joesstylea-svg.github.io/item-studio/?base_code=' + encodeURIComponent(code) + '" class="btn">Item Studioに戻る</a>';
+})();
+</script>
+</body>
+</html>
