@@ -1,12 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Item Studio - Item Workflow Studio</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root {
   /* New Design System */
@@ -1394,6 +1393,7 @@ th {
       </div>
       <div class="top-actions">
         <button class="btn" data-jump="tasks">今日やること</button>
+        <button class="btn" onclick="downloadZip()">📦 写真をまとめてDL</button>
         <button class="btn primary" data-jump="add">アイテムを追加</button>
       </div>
     </header>
@@ -1421,6 +1421,45 @@ th {
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- 写真補正モーダル -->
+<div id="photo-modal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);padding:16px;overflow-y:auto;align-items:flex-start;justify-content:center;">
+  <div style="background:var(--paper);border-radius:var(--radius-lg);width:100%;max-width:540px;margin:24px auto;padding:24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:17px;font-family:var(--font-ui);">写真を補正</h3>
+      <span id="pm-progress" style="font-size:13px;color:var(--soft);"></span>
+    </div>
+    <canvas id="pm-canvas" style="width:100%;border-radius:10px;background:var(--warm-white);display:block;"></canvas>
+    <div style="margin-top:20px;display:grid;gap:16px;">
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <label style="font-size:13px;font-weight:500;font-family:var(--font-ui);">明るさ</label>
+          <span id="pm-brightness-val" style="font-size:13px;color:var(--soft);font-variant-numeric:tabular-nums;">0</span>
+        </div>
+        <input id="pm-brightness" type="range" min="-50" max="50" value="0" style="width:100%;accent-color:var(--orange);height:4px;" oninput="updateSlider(this)">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <label style="font-size:13px;font-weight:500;font-family:var(--font-ui);">コントラスト</label>
+          <span id="pm-contrast-val" style="font-size:13px;color:var(--soft);font-variant-numeric:tabular-nums;">0</span>
+        </div>
+        <input id="pm-contrast" type="range" min="-50" max="50" value="0" style="width:100%;accent-color:var(--orange);height:4px;" oninput="updateSlider(this)">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <label style="font-size:13px;font-weight:500;font-family:var(--font-ui);">鮮やかさ</label>
+          <span id="pm-saturation-val" style="font-size:13px;color:var(--soft);font-variant-numeric:tabular-nums;">0</span>
+        </div>
+        <input id="pm-saturation" type="range" min="-50" max="50" value="0" style="width:100%;accent-color:var(--orange);height:4px;" oninput="updateSlider(this)">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;">
+      <button class="btn ghost" onclick="skipPhoto()" style="min-height:48px;">そのまま追加</button>
+      <button class="btn primary" onclick="confirmPhoto()" style="min-height:48px;">この写真で確定</button>
+    </div>
+    <button onclick="closePhotoModal()" style="width:100%;margin-top:10px;padding:10px;background:none;border:none;color:var(--soft);font-size:13px;cursor:pointer;font-family:var(--font-ui);">すべてキャンセル</button>
+  </div>
+</div>
 
 <script>
 const STORAGE_KEY = "item-studio-state-v1";
@@ -1465,7 +1504,13 @@ function toast(message) {
 }
 
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    if (e.name === "QuotaExceededError") {
+      toast("⚠️ 保存容量が上限に達しました。古いアイテムを削除してください。");
+    }
+  }
 }
 
 function load() {
@@ -1636,13 +1681,6 @@ function upgradeDemoPhotos() {
 }
 
 function demoImage(color, type) {
-  const realPhotos = {
-      "dress": "data:image/jpeg;base64,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",
-      "bag": "data:image/jpeg;base64,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",
-      "ring": "data:image/jpeg;base64,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",
-      "scarf": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAmACYDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD13xXcraaPDI2ceco4Gf4TXGSyxXWkxOz7zOp2xBcs5JOR7f8A1hXXeM4nm0OBU6+ep/8AHWrytLy80zWyLgu1gsLug2kqJMdMjkZ/nXNVvc3pWsSw6XL4fW3v7m4Vg0yICcyCFTyGPPI7ZxxXaWl0sgTy3WdWIIKElcHHQnr61mm8tpI40t4zeSth3MZIXoPvN+HQVasBLHIpldS5cHCjAUcYA9hURVmXJ3R6QvSilFFdhylO9sI9RsVhdmXBDKy9j/k1iDwfAWybqQn12iukUfIOT09adtHv+dS4p7jTaMFfC0Ea4FzJ/wB8ikh8LQpcLI9zK6qclMAA1ukc9T+dO24Hf86OVBzMWik2+5/OiqEYXiWSRNKhCOVDyANg9RgnFcmzHHU/nRRUMpFfc2fvH86nt5pYrmKSORlZXGCD70UUhnpfeiiitCT/2Q=="
-  };
-  if (realPhotos[type]) return realPhotos[type];
   const drawings = {
     dress: `<path d="M92 50h56l11 38-23 8v68H104V96l-23-8 11-38Z" fill="${color}"/><path d="M104 96h32M120 50v114" stroke="#9f927f" stroke-width="3" fill="none"/>`,
     bag: `<rect x="70" y="82" width="100" height="72" rx="10" fill="${color}"/><path d="M94 83c0-26 52-26 52 0" stroke="#171717" stroke-width="7" fill="none"/><rect x="114" y="111" width="13" height="10" rx="2" fill="#c7a36b"/>`,
@@ -2061,11 +2099,11 @@ function setSkuFromSettings() {
 
 function previewSku(consume = false) {
   const mode = state.settings.skuMode || "auto";
-  let counter = Number(localStorage.getItem(SKU_COUNTER_KEY) || "1001");
+  let counter = Number(localStorage.getItem(SKU_COUNTER_KEY) || "1");
   const maxExisting = state.items.reduce((max, item) => {
     const n = Number(String(item.sku || "").match(/\d+/)?.[0] || 0);
     return Math.max(max, n + 1);
-  }, 1001);
+  }, 0);
   counter = Math.max(counter, maxExisting);
   if (consume) localStorage.setItem(SKU_COUNTER_KEY, String(counter + 1));
   if (mode === "custom") return "";
@@ -2079,13 +2117,189 @@ function consumeSkuValue(sku) {
   if (n) localStorage.setItem(SKU_COUNTER_KEY, String(Math.max(Number(localStorage.getItem(SKU_COUNTER_KEY) || 1001), n + 1)));
 }
 
+// --- 写真キュー & 補正モーダル ---
+let photoQueue = [];
+let photoQueueIdx = 0;
+let photoModalImg = null;
+let photoModalRaf = null;
+
 function handleImages(e) {
-  Array.from(e.target.files).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = () => { currentImages.push(reader.result); renderImagePreview(); };
-    reader.readAsDataURL(file);
-  });
+  const files = Array.from(e.target.files);
   e.target.value = "";
+  if (!files.length) return;
+  photoQueue = files;
+  photoQueueIdx = 0;
+  openPhotoModal(files[0]);
+}
+
+function openPhotoModal(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      photoModalImg = img;
+      $("pm-brightness").value = 0; $("pm-brightness-val").textContent = "0";
+      $("pm-contrast").value = 0;   $("pm-contrast-val").textContent = "0";
+      $("pm-saturation").value = 0; $("pm-saturation-val").textContent = "0";
+      const total = photoQueue.length;
+      $("pm-progress").textContent = total > 1 ? `${photoQueueIdx + 1} / ${total}` : "";
+      $("photo-modal").style.display = "flex";
+      drawPhotoPreview();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateSlider(el) {
+  $(el.id + "-val").textContent = el.value;
+  cancelAnimationFrame(photoModalRaf);
+  photoModalRaf = requestAnimationFrame(drawPhotoPreview);
+}
+
+function drawPhotoPreview() {
+  const canvas = $("pm-canvas");
+  const ctx = canvas.getContext("2d");
+  const img = photoModalImg;
+  if (!img) return;
+  const maxW = Math.min(canvas.parentElement.clientWidth - 48, 500);
+  const maxH = 320;
+  const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+  canvas.width = Math.round(img.width * scale);
+  canvas.height = Math.round(img.height * scale);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  applyPixelCorrections(ctx, canvas.width, canvas.height);
+}
+
+function applyPixelCorrections(ctx, w, h) {
+  const brightness = Number($("pm-brightness").value);
+  const contrast = Number($("pm-contrast").value);
+  const saturation = Number($("pm-saturation").value);
+  if (brightness === 0 && contrast === 0 && saturation === 0) return;
+  const id = ctx.getImageData(0, 0, w, h);
+  const d = id.data;
+  const b = brightness * 2.55;
+  const f = contrast / 100 + 1;
+  for (let i = 0; i < d.length; i += 4) {
+    let r = clampPx(d[i] + b), g = clampPx(d[i+1] + b), bl = clampPx(d[i+2] + b);
+    r = clampPx(128 + (r - 128) * f);
+    g = clampPx(128 + (g - 128) * f);
+    bl = clampPx(128 + (bl - 128) * f);
+    if (saturation !== 0) {
+      const [hh, s, l] = rgbToHsl(r, g, bl);
+      [r, g, bl] = hslToRgb(hh, Math.min(1, Math.max(0, s + saturation / 100)), l);
+    }
+    d[i] = r; d[i+1] = g; d[i+2] = bl;
+  }
+  ctx.putImageData(id, 0, 0);
+}
+
+function clampPx(v) { return Math.min(255, Math.max(0, Math.round(v))); }
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h / 6, s, l];
+}
+
+function hslToRgb(h, s, l) {
+  if (s === 0) { const v = clampPx(l * 255); return [v, v, v]; }
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+  const hue = (t) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  };
+  return [clampPx(hue(h + 1/3) * 255), clampPx(hue(h) * 255), clampPx(hue(h - 1/3) * 255)];
+}
+
+function getCompressedBlob(canvas, quality = 0.85) {
+  return new Promise(resolve => {
+    const tryQ = q => canvas.toBlob(blob => {
+      if (blob.size <= 1024 * 1024 || q <= 0.4) resolve(blob);
+      else tryQ(q - 0.15);
+    }, "image/jpeg", q);
+    tryQ(quality);
+  });
+}
+
+function buildFinalCanvas(img) {
+  const scale = Math.min(1000 / Math.max(img.width, img.height), 1);
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.width * scale);
+  c.height = Math.round(img.height * scale);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+
+async function confirmPhoto() {
+  const canvas = buildFinalCanvas(photoModalImg);
+  applyPixelCorrections(canvas.getContext("2d"), canvas.width, canvas.height);
+  const blob = await getCompressedBlob(canvas);
+  const reader = new FileReader();
+  reader.onload = () => { currentImages.push(reader.result); renderImagePreview(); advancePhotoQueue(); };
+  reader.readAsDataURL(blob);
+}
+
+async function skipPhoto() {
+  const canvas = buildFinalCanvas(photoModalImg);
+  const blob = await getCompressedBlob(canvas);
+  const reader = new FileReader();
+  reader.onload = () => { currentImages.push(reader.result); renderImagePreview(); advancePhotoQueue(); };
+  reader.readAsDataURL(blob);
+}
+
+function advancePhotoQueue() {
+  photoQueueIdx++;
+  if (photoQueueIdx < photoQueue.length) openPhotoModal(photoQueue[photoQueueIdx]);
+  else closePhotoModal();
+}
+
+function closePhotoModal() {
+  $("photo-modal").style.display = "none";
+  photoQueue = []; photoQueueIdx = 0; photoModalImg = null;
+}
+
+// --- ZIP ダウンロード ---
+const isRasterImage = (url) => url && (url.startsWith("data:image/jpeg") || url.startsWith("data:image/png"));
+
+async function downloadZip() {
+  const items = state.items.filter(i => i.images && i.images.some(isRasterImage));
+  if (!items.length) { toast("ダウンロードできる写真がありません（カメラで撮った写真を追加してください）"); return; }
+  if (typeof JSZip === "undefined") { toast("JSZipの読み込みに失敗しました"); return; }
+  toast("ZIPを生成中…");
+  const zip = new JSZip();
+  let fileCount = 0;
+  items.forEach(item => {
+    const no = item.sku;
+    let photoIdx = 0;
+    item.images.forEach(dataUrl => {
+      if (!isRasterImage(dataUrl)) return;
+      const base64 = dataUrl.split(",")[1];
+      const ext = dataUrl.startsWith("data:image/png") ? "png" : "jpg";
+      const name = photoIdx === 0 ? `main.${ext}` : `detail${photoIdx}.${ext}`;
+      zip.file(`${no}/${name}`, base64, { base64: true });
+      photoIdx++; fileCount++;
+    });
+  });
+  try {
+    const blob = await zip.generateAsync({ type: "blob" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "item-studio-photos.zip";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    toast(`${items.length}商品・${fileCount}枚をZIPにしました 📦`);
+  } catch (err) {
+    toast("ZIPの生成に失敗しました"); console.error(err);
+  }
 }
 
 function renderImagePreview() {
@@ -2558,7 +2772,7 @@ function renderSettings() {
             <div class="field"><label>方式</label><select id="set-sku-mode"><option value="auto">自動採番</option><option value="custom">自由入力</option><option value="prefix">プレフィックス設定</option></select></div>
             <div class="field"><label>プレフィックス</label><input id="set-sku-prefix" value="${escapeHtml(state.settings.skuPrefix || "ITEM-")}"></div>
             <div class="field"><label>桁数</label><input id="set-sku-digits" type="number" value="${escapeHtml(state.settings.skuDigits || 4)}"></div>
-            <div class="field"><label>次の品番</label><input value="${escapeHtml(previewSku())}" readonly></div>
+            <div class="field"><label>開始品番</label><input id="set-sku-next" type="number" min="1" value="${escapeHtml(String(Number(localStorage.getItem(SKU_COUNTER_KEY) || 689)))}"><div class="hint" style="margin-top:4px;font-size:11px;color:var(--soft);">次回採番: ${escapeHtml(previewSku())}</div></div>
           </div>
         </div>
         <div class="form-section">
@@ -2609,6 +2823,8 @@ function saveSettings() {
   state.settings.skuMode = $("set-sku-mode").value;
   state.settings.skuPrefix = $("set-sku-prefix").value || "ITEM-";
   state.settings.skuDigits = Number($("set-sku-digits").value || 4);
+  const nextSku = Number($("set-sku-next")?.value);
+  if (nextSku > 0) localStorage.setItem(SKU_COUNTER_KEY, String(nextSku));
   state.settings.statuses = $("set-statuses").value.split(",").map(s => s.trim()).filter(Boolean);
   state.salesChannels = Array.from(document.querySelectorAll("[data-sales-setting]")).map((row, i) => ({
     id: "ch-" + i,
