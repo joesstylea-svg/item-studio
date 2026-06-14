@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "buildCommand": "npm install",
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 30
+    }
+  }
+}

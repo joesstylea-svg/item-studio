@@ -1,0 +1,2925 @@
+﻿<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Item Studio - Item Workflow Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root {
+  /* New Design System */
+  --main-white: #FAFAF8;
+  --warm-white: #F5F2EC;
+  --text: #262626;
+  --soft: #8E8E8E;
+  --line: #E8E5DF;
+  --line-soft: #EFECE6;
+  --orange: #F28C52;
+  --orange-soft: #FDE9DC;
+  --orange-bg: #FFF4EC;
+  --blue: #5B84D7;
+  --blue-soft: #E7EEFA;
+  --paper: #FFFFFF;
+  --status-gray: #B6B6BE;
+  --status-orange: #F28C52;
+  --status-blue: #5B84D7;
+  --status-yellow: #E8B84E;
+  --status-green: #6DB87A;
+
+  /* Shadows - very subtle */
+  --shadow: 0 2px 8px rgba(38, 38, 38, .04);
+  --shadow-soft: 0 1px 4px rgba(38, 38, 38, .03);
+  --shadow-card: 0 4px 14px rgba(38, 38, 38, .045);
+  --shadow-fab: 0 12px 28px rgba(242, 140, 82, .28);
+
+  /* Radius */
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Fonts */
+  --font-logo: "Playfair Display", "Noto Serif JP", Georgia, serif;
+  --font-heading: "Playfair Display", "Noto Serif JP", Georgia, serif;
+  --font-ui: "Noto Sans JP", "Inter", "Yu Gothic UI", Meiryo, system-ui, sans-serif;
+  --font-number: "Playfair Display", "Inter", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--main-white); color: var(--text); }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-ui);
+  background: var(--main-white);
+  color: var(--text);
+  letter-spacing: 0;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.65;
+}
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+img { max-width: 100%; display: block; }
+
+/* ================ Layout ================ */
+.app {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.side {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 32px 20px;
+  background: var(--paper);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.brand {
+  font-family: var(--font-logo);
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: .04em;
+  font-weight: 500;
+  color: var(--text);
+}
+.brand small {
+  display: block;
+  margin-top: 10px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--soft);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.nav {
+  display: grid;
+  gap: 4px;
+}
+.nav button, .mobile-nav button {
+  border: 0;
+  background: transparent;
+  color: var(--soft);
+  border-radius: var(--radius);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all .15s ease;
+}
+.nav button:hover {
+  background: var(--warm-white);
+  color: var(--text);
+}
+.nav button.active {
+  color: var(--orange);
+  background: var(--orange-bg);
+  font-weight: 600;
+}
+.nav .ico, .mobile-nav .ico {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+}
+.nav .ico svg, .mobile-nav .ico svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ico svg {
+  stroke: currentColor;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.side-card {
+  margin-top: auto;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--warm-white);
+  color: var(--soft);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+/* Main */
+.main {
+  padding: 32px 36px;
+  min-width: 0;
+  padding-bottom: 110px;
+  background: var(--main-white);
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+.eyebrow {
+  color: var(--soft);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+h1 {
+  margin: 10px 0 8px;
+  font-family: var(--font-logo);
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: .01em;
+}
+.lead {
+  color: var(--soft);
+  line-height: 1.8;
+  max-width: 580px;
+  margin: 0;
+  font-size: 13px;
+}
+.top-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* Buttons */
+.btn {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--text);
+  min-height: 42px;
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all .15s ease;
+}
+.btn:hover { border-color: var(--soft); }
+.btn.primary {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: white;
+  font-weight: 600;
+}
+.btn.primary:hover { background: #E07E45; border-color: #E07E45; }
+.btn.blue { background: var(--blue); border-color: var(--blue); color: white; font-weight: 600; }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--soft); }
+.btn.ghost:hover { background: var(--warm-white); color: var(--text); }
+.btn.small { min-height: 34px; padding: 7px 12px; font-size: 12px; }
+
+/* Panels */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* Hide top header when home panel is active (home has its own greeting) */
+body:has(#panel-home.active) .top { display: none; }
+
+/* Cards & Grids */
+.grid { display: grid; gap: 16px; }
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.metric, .card, .work-panel {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+.metric {
+  padding: 18px 20px;
+  min-height: 104px;
+}
+.metric .label {
+  color: var(--soft);
+  font-size: 12px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.metric .value {
+  font-family: var(--font-number);
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: -.01em;
+}
+.metric .sub { color: var(--soft); font-size: 12px; margin-top: 10px; }
+
+.two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(330px, .7fr);
+  gap: 18px;
+  align-items: start;
+}
+.work-panel { overflow: hidden; }
+.panel-head {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+h2, h3 { margin: 0; }
+h2 {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: .005em;
+}
+h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.muted { color: var(--soft); font-size: 12px; }
+
+.list { display: grid; gap: 10px; padding: 16px; }
+
+.todo-row, .recent-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+.thumb {
+  width: 64px;
+  aspect-ratio: 1;
+  border-radius: var(--radius);
+  background: var(--warm-white);
+  border: 1px solid var(--line);
+  object-fit: cover;
+}
+.title { font-weight: 600; font-size: 14px; }
+.meta { margin-top: 4px; color: var(--soft); font-size: 12px; line-height: 1.5; }
+
+/* Status Badges */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--warm-white);
+  color: #6d6258;
+  white-space: nowrap;
+  letter-spacing: .02em;
+}
+.tag.orange { background: var(--orange-soft); color: #B85730; }
+.tag.blue { background: var(--blue-soft); color: #2D5FAC; }
+.tag.gray { background: #F0EFEC; color: #6d6258; }
+
+/* ================ Home New Design ================ */
+.hs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+.hs-date {
+  font-size: 11px;
+  color: var(--soft);
+  margin: 0 0 3px;
+  letter-spacing: .05em;
+}
+.hs-hello {
+  font-size: 13px;
+  margin: 0;
+  color: var(--text);
+}
+.hs-hello b { color: var(--orange); font-weight: 600; }
+.hs-bell {
+  position: relative;
+  border: 0;
+  background: transparent;
+  padding: 2px;
+  color: var(--text);
+}
+.hs-bell::after {
+  content: "";
+  position: absolute;
+  top: 0; right: 0;
+  width: 7px; height: 7px;
+  background: var(--orange);
+  border-radius: 50%;
+  border: 1.5px solid var(--main-white);
+}
+.hs-title {
+  font-family: var(--font-logo);
+  font-size: 26px;
+  font-weight: 500;
+  margin: 0 0 14px;
+  letter-spacing: .01em;
+  color: var(--text);
+}
+
+/* NEXT card */
+.hs-next {
+  background: var(--paper);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  border: 0;
+  width: 100%;
+  text-align: left;
+  transition: box-shadow .15s;
+}
+.hs-next:hover { box-shadow: var(--shadow-card); }
+.hs-next-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.hs-next-thumb-empty {
+  background: var(--warm-white);
+  border: 1px solid var(--line);
+}
+.hs-next-body { flex: 1; min-width: 0; }
+.hs-next-label {
+  font-size: 9px;
+  color: var(--orange);
+  font-weight: 600;
+  letter-spacing: .16em;
+  margin: 0 0 3px;
+}
+.hs-next-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+  color: var(--text);
+}
+.hs-next-meta {
+  font-size: 11px;
+  color: var(--soft);
+  margin: 2px 0 0;
+}
+
+/* Status list */
+.hs-status-list {
+  background: var(--paper);
+  border-radius: 14px;
+  padding: 2px 0;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.hs-status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border: 0;
+  border-bottom: .5px solid var(--line-soft);
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background .12s;
+  color: var(--text);
+}
+.hs-status-row:hover { background: var(--warm-white); }
+.hs-status-row-last { border-bottom: 0; }
+.hs-status-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: var(--text);
+}
+.hs-status-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+.hs-status-num {
+  font-family: var(--font-number);
+  font-size: 20px;
+  font-weight: 500;
+  min-width: 28px;
+  text-align: right;
+  color: var(--text);
+}
+.hs-num-alert { color: var(--orange); }
+
+/* Sales */
+.hs-sales-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 4px;
+  margin-bottom: 10px;
+  border-bottom: .5px solid var(--line);
+}
+.hs-sales-label { font-size: 12px; color: var(--soft); }
+.hs-sales-val {
+  font-family: var(--font-number);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* Recent items */
+.hs-recent-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+.hs-recent-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.hs-recent-more {
+  border: 0;
+  background: transparent;
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.hs-item-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.hs-item-card {
+  background: var(--paper);
+  border-radius: 14px;
+  padding: 8px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+}
+.hs-item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+.hs-item-photo {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  object-fit: cover;
+  display: block;
+  margin-bottom: 8px;
+}
+.hs-item-photo-empty {
+  background: var(--warm-white);
+  border: 1px solid var(--line);
+}
+.hs-item-sku {
+  font-size: 10px;
+  color: var(--soft);
+  margin: 0 0 2px;
+  letter-spacing: .03em;
+}
+.hs-item-name {
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0 0 6px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hs-item-card .tag {
+  padding: 3px 9px;
+  font-size: 10px;
+}
+
+/* ================ Home New Design ================ */
+.home-shell {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 4px 0 24px;
+}
+.home-hello {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: start;
+  margin-bottom: 4px;
+}
+.hello-copy {
+  color: var(--soft);
+  font-size: 13px;
+  font-weight: 400;
+  margin-bottom: 6px;
+}
+.hello-copy b {
+  color: var(--orange);
+  font-weight: 600;
+}
+.bell {
+  position: relative;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  padding: 2px;
+}
+.bell::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: var(--orange);
+  border: 2px solid var(--paper);
+  border-radius: 999px;
+}
+.home-title {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.2;
+  margin: 0 0 24px;
+  letter-spacing: .01em;
+}
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 36px;
+}
+.status-card {
+  min-height: 100px;
+  padding: 18px 20px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+.status-card .label {
+  color: var(--soft);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+.status-card .value {
+  font-family: var(--font-number);
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: -.02em;
+}
+.status-icon {
+  color: var(--text);
+  opacity: .85;
+}
+.status-icon svg {
+  width: 26px;
+  height: 26px;
+  stroke-width: 1.4;
+}
+
+.home-section { margin-bottom: 32px; }
+.section-mini-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.section-mini-head h2 {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.section-mini-head button {
+  border: 0;
+  background: transparent;
+  color: var(--orange);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.recent-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 132px;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 2px 8px;
+  scrollbar-width: none;
+}
+.recent-strip::-webkit-scrollbar { display: none; }
+.recent-card {
+  min-width: 0;
+  cursor: pointer;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px;
+  box-shadow: var(--shadow-soft);
+}
+.recent-card .thumb {
+  width: 100%;
+  height: 132px;
+  border: 0;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: var(--warm-white);
+}
+.recent-card .meta {
+  margin: 0 0 2px;
+  font-size: 10px;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  color: var(--soft);
+  letter-spacing: .02em;
+}
+.recent-card .title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 6px;
+}
+.recent-card .tag {
+  margin-top: 4px;
+  padding: 3px 8px;
+  font-size: 10px;
+}
+
+.task-list {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.task-line {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 54px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line-soft);
+  background: transparent;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  width: 100%;
+  text-align: left;
+  color: var(--text);
+  transition: background .15s ease;
+}
+.task-line:hover { background: var(--warm-white); }
+.task-line:last-child { border-bottom: 0; }
+.task-check {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--soft);
+  border-radius: 999px;
+  position: relative;
+}
+.task-line .title {
+  font-size: 14px;
+  font-weight: 500;
+}
+.task-count {
+  color: var(--soft);
+  font-size: 12px;
+  white-space: nowrap;
+  font-weight: 400;
+}
+.chevron {
+  color: var(--soft);
+  margin-left: 6px;
+}
+
+.focus-card {
+  margin: 4px 0 28px;
+  padding: 18px 20px;
+  border: 1px solid var(--orange-soft);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #FFFAF5, #FFF4EC);
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+}
+.focus-label {
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.focus-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.focus-card .btn { min-height: 36px; }
+
+/* ================ Add Form / Photo-first ================ */
+.photo-first {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr);
+  gap: 20px;
+  align-items: stretch;
+  margin-bottom: 20px;
+}
+.photo-hero {
+  border: 1px dashed #D8D2C8;
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  padding: 28px;
+  min-height: 240px;
+  display: grid;
+  align-content: center;
+  gap: 14px;
+}
+.photo-hero h2 {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  font-weight: 500;
+}
+.photo-hero p {
+  color: var(--soft);
+  line-height: 1.8;
+  margin: 0;
+  font-size: 13px;
+}
+.photo-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.studio-note {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  padding: 20px;
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  box-shadow: var(--shadow);
+}
+
+/* ================ Detail Modal Studio ================ */
+.detail-studio {
+  display: grid;
+  grid-template-columns: minmax(280px, .95fr) minmax(0, 1.05fr);
+  gap: 24px;
+}
+.detail-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.detail-no {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--soft);
+  font-weight: 500;
+  letter-spacing: .04em;
+}
+.detail-title {
+  font-family: var(--font-logo);
+  font-size: 34px;
+  font-weight: 500;
+  margin: 14px 0 12px;
+  letter-spacing: .01em;
+  line-height: 1.15;
+}
+.photo-stack {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.photo-count {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  border-radius: 999px;
+  padding: 5px 11px;
+  background: rgba(38, 38, 38, .72);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .02em;
+}
+.detail-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid var(--line);
+  margin-top: 18px;
+}
+.detail-tabs button {
+  border: 0;
+  background: transparent;
+  min-height: 44px;
+  color: var(--soft);
+  font-weight: 500;
+  font-size: 13px;
+  position: relative;
+}
+.detail-tabs button.active {
+  color: var(--orange);
+}
+.detail-tabs button.active::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  background: var(--orange);
+  border-radius: 2px;
+}
+
+.info-list {
+  display: grid;
+  gap: 0;
+  margin-top: 14px;
+}
+.info-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 14px;
+  padding: 12px 0;
+  font-size: 13px;
+  line-height: 1.65;
+  border-bottom: 1px solid var(--line-soft);
+}
+.info-row:last-child { border-bottom: 0; }
+.info-row .key {
+  color: var(--soft);
+  font-weight: 400;
+}
+
+.detail-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: 20px;
+}
+.detail-actions button {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  min-height: 64px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius);
+  transition: background .15s ease;
+}
+.detail-actions button:hover { background: var(--warm-white); }
+.detail-actions button:nth-child(2) {
+  color: var(--orange);
+  background: var(--orange-bg);
+}
+.detail-actions .ico svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.5;
+}
+
+.sales-mini {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.sales-mini-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.sales-mini-row:last-child { border-bottom: 0; }
+.channel-dot {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--orange-bg);
+  color: var(--orange);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ================ Form ================ */
+.form-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+.form-section {
+  padding: 22px 0;
+  border-top: 1px solid var(--line);
+}
+.form-section:first-child { border-top: 0; padding-top: 0; }
+.section-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.field { display: grid; gap: 7px; min-width: 0; }
+.field.full { grid-column: 1 / -1; }
+label {
+  color: var(--soft);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .04em;
+}
+input, select, textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--text);
+  min-height: 44px;
+  padding: 11px 14px;
+  font-size: 14px;
+  transition: border-color .15s ease;
+}
+textarea { min-height: 100px; resize: vertical; line-height: 1.7; }
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(242, 140, 82, .12);
+}
+.hint { color: var(--soft); font-size: 11px; line-height: 1.6; }
+.inline { display: flex; gap: 8px; align-items: stretch; }
+.inline > * { min-width: 0; }
+.measurements {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.image-box {
+  border: 1px dashed #D6D0C7;
+  background: var(--paper);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.preview-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.preview-thumb {
+  position: relative;
+  width: 88px;
+  aspect-ratio: 1;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--warm-white);
+}
+.preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.preview-thumb button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .94);
+  font-size: 13px;
+  line-height: 1;
+}
+.channel-list, .custom-list { display: grid; gap: 10px; }
+.channel-row, .custom-row {
+  display: grid;
+  grid-template-columns: 1fr 110px 1fr 88px 88px 88px auto;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+.custom-row { grid-template-columns: 1fr 140px 1fr auto; }
+
+.filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(5, minmax(130px, .45fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(238px, 1fr));
+  gap: 16px;
+}
+.item-card {
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(38, 38, 38, .07);
+}
+.item-card .photo {
+  aspect-ratio: 1;
+  background: var(--warm-white);
+  position: relative;
+}
+.item-card .photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.item-card .body { padding: 14px; }
+.item-card .foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+.price {
+  font-family: var(--font-number);
+  font-size: 22px;
+  font-weight: 500;
+}
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+.table-wrap {
+  overflow: auto;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+table { width: 100%; border-collapse: collapse; min-width: 760px; }
+th, td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+  font-size: 13px;
+  vertical-align: middle;
+}
+th {
+  color: var(--soft);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  background: var(--warm-white);
+}
+
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.template-card { padding: 18px; }
+.template-card textarea { min-height: 150px; margin-top: 10px; }
+
+/* ================ Modal ================ */
+.modal-bg {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(38, 38, 38, .35);
+  padding: 24px;
+  overflow: auto;
+  backdrop-filter: blur(4px);
+}
+.modal-bg.show { display: block; }
+.modal {
+  background: var(--paper);
+  border-radius: var(--radius-xl);
+  max-width: 980px;
+  margin: 0 auto;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .2);
+  overflow: hidden;
+}
+.modal-head, .modal-foot {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.modal-head h2 {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+}
+.modal-foot {
+  border-top: 1px solid var(--line);
+  border-bottom: 0;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.modal-body { padding: 24px; }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  gap: 20px;
+}
+.detail-photo {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  background: var(--warm-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+}
+.desc-box {
+  white-space: pre-wrap;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--warm-white);
+  line-height: 1.8;
+  max-height: 280px;
+  overflow: auto;
+  font-size: 13px;
+}
+
+.empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--soft);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  font-size: 13px;
+}
+
+.toast {
+  position: fixed;
+  right: 20px;
+  bottom: 100px;
+  z-index: 400;
+  background: var(--text);
+  color: white;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: .2s ease;
+  box-shadow: 0 12px 28px rgba(38, 38, 38, .25);
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ================ Mobile ================ */
+.mobile-nav { display: none; }
+@media (max-width: 980px) {
+  .app { grid-template-columns: 1fr; }
+  .side { display: none; }
+  body { background: var(--main-white); }
+  .main {
+    max-width: none;
+    min-height: 100vh;
+    margin: 0;
+    padding: 24px 20px 110px;
+    background: var(--main-white);
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+  }
+  .top { display: none; }
+  .home-shell {
+    padding: 0;
+    max-width: 520px;
+  }
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .two-col, .detail-grid { grid-template-columns: 1fr; }
+  .filters { grid-template-columns: 1fr 1fr; }
+  .channel-row { grid-template-columns: 1fr 1fr; }
+  .custom-row { grid-template-columns: 1fr 1fr; }
+  .photo-first, .detail-studio { grid-template-columns: 1fr; }
+
+  .mobile-nav {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    width: 100%;
+    z-index: 120;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 8px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, .96);
+    border-top: 1px solid var(--line);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 -2px 12px rgba(38, 38, 38, .04);
+    gap: 0;
+  }
+  .mobile-nav button {
+    flex: 1;
+    min-height: 52px;
+    padding: 6px 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    border-radius: 12px;
+    color: var(--soft);
+    border: 0;
+    background: transparent;
+  }
+  .mobile-nav button.active { color: var(--orange); }
+  .mobile-nav button.add {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mobile-nav button.add .ico {
+    width: 56px;
+    height: 56px;
+    background: var(--orange);
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-fab);
+    transform: translateY(-12px);
+    flex-shrink: 0;
+  }
+  .mobile-nav button.add .ico svg {
+    width: 28px;
+    height: 28px;
+    stroke: white;
+    stroke-width: 2;
+  }
+  .mobile-nav button.add span:last-child { display: none; }
+}
+
+@media (max-width: 640px) {
+  .top-actions { justify-content: flex-start; margin-top: 16px; }
+  .form-grid, .measurements, .filters { grid-template-columns: 1fr; }
+  .field.full { grid-column: auto; }
+  .modal-bg { padding: 12px; }
+  .detail-actions { grid-template-columns: repeat(3, 1fr); }
+  .info-row { grid-template-columns: 90px minmax(0, 1fr); }
+  .recent-strip { grid-auto-columns: 124px; }
+  .home-title { font-size: 26px; }
+  .status-card .value { font-size: 34px; }
+}
+
+@media (max-width: 420px) {
+  .main { padding-left: 18px; padding-right: 18px; }
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">ITEM<br>STUDIO<small>Photo, Note, List, Sell.</small></div>
+    <nav class="nav" id="desktop-nav"></nav>
+    <div class="side-card">写真を撮っただけで終わらせない。採寸、メモ、出品、販売後の取下げチェックまで流すワークスペース。</div>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <div>
+        <div class="eyebrow">Item Studio</div>
+        <h1>ワークスペース</h1>
+        <p class="lead">撮影、メモ、整理、出品、販売、発送まで。公開前のすべての作業がここに。</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn" data-jump="tasks">今日やること</button>
+        <button class="btn" onclick="downloadZip()">📦 写真をまとめてDL</button>
+        <button class="btn primary" data-jump="add">アイテムを追加</button>
+      </div>
+    </header>
+
+    <section class="panel active" id="panel-home"></section>
+    <section class="panel" id="panel-add"></section>
+    <section class="panel" id="panel-items"></section>
+    <section class="panel" id="panel-tasks"></section>
+    <section class="panel" id="panel-templates"></section>
+    <section class="panel" id="panel-settings"></section>
+  </main>
+</div>
+
+<nav class="mobile-nav" id="mobile-nav"></nav>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-title">Item detail</h2>
+      <button class="btn ghost small" id="modal-close">閉じる</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 写真補正モーダル -->
+<div id="photo-modal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);padding:16px;overflow-y:auto;align-items:flex-start;justify-content:center;">
+  <div style="background:var(--paper);border-radius:var(--radius-lg);width:100%;max-width:540px;margin:24px auto;padding:24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:17px;font-family:var(--font-ui);">写真を補正</h3>
+      <span id="pm-progress" style="font-size:13px;color:var(--soft);"></span>
+    </div>
+    <canvas id="pm-canvas" style="width:100%;border-radius:10px;background:var(--warm-white);display:block;"></canvas>
+    <div style="margin-top:20px;display:grid;gap:16px;">
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <label style="font-size:13px;font-weight:500;font-family:var(--font-ui);">明るさ</label>
+          <span id="pm-brightness-val" style="font-size:13px;color:var(--soft);font-variant-numeric:tabular-nums;">0</span>
+        </div>
+        <input id="pm-brightness" type="range" min="-50" max="50" value="0" style="width:100%;accent-color:var(--orange);height:4px;" oninput="updateSlider(this)">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <label style="font-size:13px;font-weight:500;font-family:var(--font-ui);">コントラスト</label>
+          <span id="pm-contrast-val" style="font-size:13px;color:var(--soft);font-variant-numeric:tabular-nums;">0</span>
+        </div>
+        <input id="pm-contrast" type="range" min="-50" max="50" value="0" style="width:100%;accent-color:var(--orange);height:4px;" oninput="updateSlider(this)">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <label style="font-size:13px;font-weight:500;font-family:var(--font-ui);">鮮やかさ</label>
+          <span id="pm-saturation-val" style="font-size:13px;color:var(--soft);font-variant-numeric:tabular-nums;">0</span>
+        </div>
+        <input id="pm-saturation" type="range" min="-50" max="50" value="0" style="width:100%;accent-color:var(--orange);height:4px;" oninput="updateSlider(this)">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;">
+      <button class="btn ghost" onclick="skipPhoto()" style="min-height:48px;">そのまま追加</button>
+      <button class="btn primary" onclick="confirmPhoto()" style="min-height:48px;">この写真で確定</button>
+    </div>
+    <button onclick="closePhotoModal()" style="width:100%;margin-top:10px;padding:10px;background:none;border:none;color:var(--soft);font-size:13px;cursor:pointer;font-family:var(--font-ui);">すべてキャンセル</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = "item-studio-state-v1";
+const LEGACY_KEY = "closet-manager-items";
+const SKU_COUNTER_KEY = "item-studio-sku-counter";
+const DEFAULT_STATUSES = ["撮影待ち", "採寸待ち", "登録待ち", "出品中", "販売済", "発送待ち", "完了", "保留"];
+const DEFAULT_CHANNELS = ["メルカリ", "BASE", "Etsy", "Instagram", "Mikke bazaar", "委託先", "ラクマ", "その他"];
+const NAV = [
+  ["home", "ホーム", "home"],
+  ["add", "追加", "plus"],
+  ["items", "アイテム", "box"],
+  ["tasks", "タスク", "task"],
+  ["templates", "テンプレ", "pen"],
+  ["settings", "設定", "settings"]
+];
+
+let state = {
+  items: [],
+  salesChannels: DEFAULT_CHANNELS.map((name, i) => ({ id: "ch-" + i, name, defaultFeeRate: 0, fixedFee: 0 })),
+  customFields: [],
+  tasks: [],
+  templates: [],
+  sales: [],
+  teamComments: [],
+  settings: { skuMode: "auto", skuPrefix: "ITEM-", skuDigits: 4, statuses: DEFAULT_STATUSES }
+};
+let currentImages = [];
+let editingId = "";
+let currentDetailId = "";
+
+const $ = (id) => document.getElementById(id);
+const yen = (v) => "¥" + Math.round(Number(v || 0)).toLocaleString();
+const todayKey = () => new Date().toISOString().slice(0, 10);
+const monthKey = () => new Date().toISOString().slice(0, 7);
+const escapeHtml = (str = "") => String(str).replace(/[&<>"']/g, s => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[s]));
+const uid = (prefix) => prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+
+function toast(message) {
+  $("toast").textContent = message;
+  $("toast").classList.add("show");
+  setTimeout(() => $("toast").classList.remove("show"), 1800);
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    if (e.name === "QuotaExceededError") {
+      toast("⚠️ 保存容量が上限に達しました。古いアイテムを削除してください。");
+    }
+  }
+}
+
+function load() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      state = {
+        ...state,
+        ...parsed,
+        settings: { ...state.settings, ...(parsed.settings || {}) },
+        salesChannels: parsed.salesChannels && parsed.salesChannels.length ? parsed.salesChannels : state.salesChannels,
+        templates: parsed.templates && parsed.templates.length ? parsed.templates : defaultTemplates()
+      };
+      ensureDemoData();
+      save();
+      return;
+    } catch (e) {}
+  }
+  const legacy = localStorage.getItem(LEGACY_KEY);
+  if (legacy) {
+    try {
+      const oldItems = JSON.parse(legacy);
+      state.items = oldItems.map(item => normalizeItem(item));
+    } catch (e) {}
+  }
+  state.templates = defaultTemplates();
+  ensureDemoData();
+  save();
+}
+
+function ensureDemoData() {
+  if (state.items.length) {
+    upgradeDemoPhotos();
+    return;
+  }
+  const now = Date.now();
+  const demoItems = [
+    {
+      sku: "1023",
+      title: "Linen Dress",
+      brand: "",
+      category: "ワンピース",
+      color: "ベージュ",
+      material: "リネン100%",
+      condition: "目立った傷や汚れなし",
+      purchased: "2024年春",
+      source: "マルシェ仕入れ",
+      origPrice: "12800",
+      price: "6800",
+      cost: "3200",
+      measurements: { sizeLabel: "FREE", length: "120", bust: "52", sleeve: "35", other: "総丈120cm / 身幅52cm / 袖丈35cm" },
+      points: "ナチュラルな風合い\nウエストリボン付き\n撮影済み",
+      notes: "小さな汚れなし。自然光で色味確認済み。",
+      privateMemo: "BASE説明文は少し短めに。Instagramは着用感を追記。",
+      location: "棚A-3",
+      status: "登録待ち",
+      owner: "Ayumi",
+      images: [demoImage("#d8cab8", "dress")],
+      channels: [
+        { channelName: "メルカリ", status: "出品中", url: "", feeRate: 10, fixedFee: 0, shipping: 750, memo: "" },
+        { channelName: "BASE", status: "出品中", url: "", feeRate: 3, fixedFee: 40, shipping: 750, memo: "" },
+        { channelName: "Instagram", status: "掲載中", url: "", feeRate: 0, fixedFee: 0, shipping: 0, memo: "" }
+      ],
+      createdAt: now - 1000 * 60 * 60 * 3,
+      updatedAt: now - 1000 * 60 * 20
+    },
+    {
+      sku: "1022",
+      title: "Leather Bag",
+      brand: "atelier noir",
+      category: "バッグ",
+      color: "ブラック",
+      material: "牛革",
+      condition: "目立った傷や汚れなし",
+      price: "11800",
+      cost: "5200",
+      measurements: { sizeLabel: "M", other: "幅26cm / 高さ19cm / マチ9cm" },
+      points: "金具に小さな使用感\n自立します\n出品写真OK",
+      notes: "角擦れほぼなし。",
+      privateMemo: "委託先にも確認する。",
+      location: "棚B-1",
+      status: "出品中",
+      owner: "Mina",
+      images: [demoImage("#2e2b28", "bag")],
+      channels: [
+        { channelName: "メルカリ", status: "出品中", url: "", feeRate: 10, fixedFee: 0, shipping: 850, memo: "" },
+        { channelName: "ラクマ", status: "未出品", url: "", feeRate: 6, fixedFee: 0, shipping: 850, memo: "" }
+      ],
+      createdAt: now - 1000 * 60 * 60 * 8,
+      updatedAt: now - 1000 * 60 * 60
+    },
+    {
+      sku: "1021",
+      title: "Silver Ring",
+      brand: "",
+      category: "アクセサリー",
+      color: "シルバー",
+      material: "silver925",
+      condition: "未使用に近い",
+      price: "4200",
+      cost: "1400",
+      measurements: { sizeLabel: "11号", weight: "6" },
+      points: "光沢あり\n小物ケース付き",
+      notes: "リング内側に薄い刻印あり。",
+      privateMemo: "Etsy向けに英語説明を追加。",
+      location: "アクセサリーBOX",
+      status: "出品中",
+      owner: "Ayumi",
+      images: [demoImage("#c9c5bc", "ring")],
+      channels: [
+        { channelName: "Etsy", status: "出品中", url: "", feeRate: 6.5, fixedFee: 30, shipping: 500, memo: "" },
+        { channelName: "Instagram", status: "掲載中", url: "", feeRate: 0, fixedFee: 0, shipping: 0, memo: "" }
+      ],
+      createdAt: now - 1000 * 60 * 60 * 12,
+      updatedAt: now - 1000 * 60 * 80
+    },
+    {
+      sku: "1020",
+      title: "Vintage Scarf",
+      brand: "",
+      category: "ファッション小物",
+      color: "アイボリー",
+      material: "シルク",
+      condition: "やや傷や汚れあり",
+      price: "3500",
+      cost: "900",
+      measurements: { other: "約68cm角" },
+      points: "端に小さな点シミ\n柄がきれい",
+      notes: "写真で状態説明が必要。",
+      privateMemo: "撮影し直し。",
+      location: "棚C-2",
+      status: "撮影待ち",
+      owner: "Saki",
+      images: [demoImage("#e7d8c9", "scarf")],
+      channels: [{ channelName: "メルカリ", status: "未出品", url: "", feeRate: 10, fixedFee: 0, shipping: 210, memo: "" }],
+      createdAt: now - 1000 * 60 * 60 * 20,
+      updatedAt: now - 1000 * 60 * 60 * 5
+    }
+  ];
+  state.items = demoItems.map(item => normalizeItem(item));
+  state.demoSeeded = true;
+  state.tasks = [
+    { id: uid("task"), itemId: state.items[0].id, title: "No.1023 採寸メモを確認", type: "採寸", note: "サイズ表記を出品文へ反映", done: false, createdAt: now - 5000 },
+    { id: uid("task"), itemId: state.items[0].id, title: "No.1023 Instagram投稿文を整える", type: "出品", note: "自然光の写真を1枚目にする", done: false, createdAt: now - 4000 },
+    { id: uid("task"), itemId: state.items[1].id, title: "No.1022 ラクマ出品確認", type: "出品", note: "価格差を確認して掲載", done: false, createdAt: now - 3000 },
+    { id: uid("task"), itemId: state.items[3].id, title: "No.1020 スカーフを撮影し直し", type: "撮影", note: "点シミがわかる写真を追加", done: false, createdAt: now - 2000 }
+  ];
+  state.sales = [
+    { id: uid("sale"), itemId: "demo-sold-1", sku: "1019", title: "Handmade Brooch", channelName: "BASE", salePrice: 13800, fee: 454, shipping: 750, cost: 4200, profit: 8396, date: todayKey() },
+    { id: uid("sale"), itemId: "demo-sold-2", sku: "1018", title: "Linen Pouch", channelName: "メルカリ", salePrice: 8400, fee: 840, shipping: 520, cost: 2100, profit: 4940, date: monthKey() + "-12" }
+  ];
+}
+
+function upgradeDemoPhotos() {
+  const photoByTitle = {
+    "Linen Dress": demoImage("#d8cab8", "dress"),
+    "Leather Bag": demoImage("#2e2b28", "bag"),
+    "Silver Ring": demoImage("#c9c5bc", "ring"),
+    "Vintage Scarf": demoImage("#e7d8c9", "scarf")
+  };
+  state.items.forEach(item => {
+    if (photoByTitle[item.title]) item.images = [photoByTitle[item.title]];
+  });
+  if (["Linen Dress", "Leather Bag", "Silver Ring", "Vintage Scarf"].every(title => state.items.some(item => item.title === title))) {
+    state.demoSeeded = true;
+  }
+}
+
+function demoImage(color, type) {
+  const drawings = {
+    dress: `<path d="M92 50h56l11 38-23 8v68H104V96l-23-8 11-38Z" fill="${color}"/><path d="M104 96h32M120 50v114" stroke="#9f927f" stroke-width="3" fill="none"/>`,
+    bag: `<rect x="70" y="82" width="100" height="72" rx="10" fill="${color}"/><path d="M94 83c0-26 52-26 52 0" stroke="#171717" stroke-width="7" fill="none"/><rect x="114" y="111" width="13" height="10" rx="2" fill="#c7a36b"/>`,
+    ring: `<circle cx="120" cy="110" r="43" fill="none" stroke="${color}" stroke-width="16"/><circle cx="120" cy="110" r="29" fill="none" stroke="#f7f4ee" stroke-width="8"/>`,
+    scarf: `<path d="M64 62h112v112H64z" fill="${color}"/><path d="m64 62 112 112M176 62 64 174" stroke="#ba9d83" stroke-width="5" opacity=".55"/>`
+  };
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240"><rect width="240" height="240" fill="#f5f2ec"/><circle cx="188" cy="42" r="46" fill="#fff" opacity=".65"/>${drawings[type] || drawings.dress}</svg>`;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+
+function normalizeItem(item = {}) {
+  const channels = item.channels || [{ channelName: "メルカリ", status: item.status === "出品中" ? "出品中" : "未出品", url: "", feeRate: 10, fixedFee: 0, shipping: 0, memo: "" }];
+  return {
+    id: item.id || uid("item"),
+    sku: item.sku || getNextSku(),
+    title: item.title || "",
+    brand: item.brand || "",
+    category: item.category || "",
+    color: item.color || "",
+    material: item.material || "",
+    condition: item.condition || "",
+    purchased: item.purchased || "",
+    source: item.source || "",
+    origPrice: item.origPrice || "",
+    price: item.price || "",
+    cost: item.cost || "",
+    measurements: item.measurements || {},
+    points: item.points || "",
+    notes: item.notes || "",
+    privateMemo: item.privateMemo || "",
+    location: item.location || "",
+    status: normalizeStatus(item.status),
+    owner: item.owner || "",
+    images: item.images || [],
+    channels,
+    customValues: item.customValues || {},
+    description: item.description || "",
+    createdAt: item.createdAt || Date.now(),
+    updatedAt: item.updatedAt || Date.now()
+  };
+}
+
+function normalizeStatus(status) {
+  const map = { "下書き": "登録待ち", "出品中": "出品中", "売却済": "販売済" };
+  return map[status] || status || "撮影待ち";
+}
+
+function defaultTemplates() {
+  return [
+    { id: uid("tpl"), type: "出品説明", title: "やわらかい商品説明", body: "ご覧いただきありがとうございます。\n{item_title}\n\n素材: {material}\n状態: {condition}\nサイズ: {measurements}\n\n気になる点がありましたらお気軽にコメントください。" },
+    { id: uid("tpl"), type: "購入者返信", title: "購入お礼", body: "このたびはご購入ありがとうございます。\n発送準備が整い次第、改めてご連絡いたします。" },
+    { id: uid("tpl"), type: "発送連絡", title: "発送完了", body: "本日発送いたしました。\n到着まで少々お待ちくださいませ。" },
+    { id: uid("tpl"), type: "トラブル対応", title: "確認します", body: "ご連絡ありがとうございます。\n内容を確認し、改めてご連絡いたします。" }
+  ];
+}
+
+function iconSvg(name) {
+  const icons = {
+    home: '<svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"></path><path d="M6.5 10.5V20h4v-5.5h3V20h4v-9.5"></path></svg>',
+    box: '<svg viewBox="0 0 24 24"><path d="M6 8.5h12l-1 11H7L6 8.5Z"></path><path d="M9 8.5a3 3 0 0 1 6 0"></path></svg>',
+    plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>',
+    task: '<svg viewBox="0 0 24 24"><path d="M7 4.5h10v15H7z"></path><path d="M9.5 8.5h5"></path><path d="m9.5 13 1.6 1.6 3.6-3.8"></path></svg>',
+    pen: '<svg viewBox="0 0 24 24"><path d="M4 20h16"></path><path d="m6.5 15.5 1.1-4.2L16.8 2l4.2 4.2-9.2 9.2-4.3 1.1Z"></path></svg>',
+    settings: '<svg viewBox="0 0 24 24"><path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z"></path><path d="M19 12a7.3 7.3 0 0 0-.1-1l2-1.5-2-3.4-2.4 1a7 7 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.5a7.3 7.3 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5c.1-.3.1-.7.1-1Z"></path></svg>',
+    camera: '<svg viewBox="0 0 24 24"><path d="M7 7.5 8.6 5h6.8L17 7.5h2.5v11h-15v-11H7Z"></path><path d="M12 10a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"></path></svg>',
+    diamond: '<svg viewBox="0 0 24 24"><path d="m12 3 8 8-8 10-8-10 8-8Z"></path></svg>',
+    truck: '<svg viewBox="0 0 24 24"><path d="M3 6.5h11v10H3z"></path><path d="M14 10h4l3 3v3.5h-7"></path><path d="M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path><path d="M18 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path></svg>',
+    bell: '<svg viewBox="0 0 24 24"><path d="M18 10a6 6 0 1 0-12 0c0 7-2.5 7-2.5 7h17S18 17 18 10Z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>',
+    pencil: '<svg viewBox="0 0 24 24"><path d="m5 17 1 2 2 1 11-11-3-3L5 17Z"></path><path d="m14.5 7.5 3 3"></path></svg>'
+  };
+  return icons[name] || icons.box;
+}
+
+function renderNav() {
+  const desktop = $("desktop-nav");
+  const mobile = $("mobile-nav");
+  desktop.innerHTML = NAV.map(([id, label, icon]) => `<button class="nav-btn ${id === "home" ? "active" : ""}" data-tab="${id}"><span class="ico">${iconSvg(icon)}</span>${label}</button>`).join("");
+  const mobileOrder = ["home", "items", "add", "tasks", "settings"];
+  mobile.innerHTML = mobileOrder.map(id => {
+    const entry = NAV.find(n => n[0] === id);
+    if (!entry) return "";
+    const [, label, icon] = entry;
+    return `<button class="nav-btn ${id === "add" ? "add" : ""} ${id === "home" ? "active" : ""}" data-tab="${id}"><span class="ico">${iconSvg(icon)}</span><span>${label}</span></button>`;
+  }).join("");
+  document.querySelectorAll(".nav-btn, [data-jump]").forEach(btn => btn.addEventListener("click", () => switchTab(btn.dataset.tab || btn.dataset.jump)));
+}
+
+function switchTab(tab) {
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  $("panel-" + tab).classList.add("active");
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  if (tab === "home") renderHome();
+  if (tab === "add") renderAdd();
+  if (tab === "items") renderItems();
+  if (tab === "tasks") renderTasks();
+  if (tab === "templates") renderTemplates();
+  if (tab === "settings") renderSettings();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function statusClass(status) {
+  if (["登録待ち","撮影待ち","採寸待ち","下書き中","出品待ち"].includes(status)) return "orange";
+  if (["出品中","販売済","完了"].includes(status)) return "blue";
+  if (["発送待ち"].includes(status)) return "orange";
+  return "gray";
+}
+
+function renderHome() {
+  const demoMode = state.demoSeeded === true;
+
+  // ステータス集計(新4分類)
+  const draft     = demoMode ? 12 : state.items.filter(i => ["撮影待ち","採寸待ち","登録待ち","下書き中"].includes(i.status)).length;
+  const readyList = demoMode ? 5  : state.items.filter(i => ["出品待ち"].includes(i.status)).length;
+  const listed    = demoMode ? 32 : state.items.filter(i => i.status === "出品中" || (i.channels||[]).some(ch => ch.status === "出品中")).length;
+  const shipping  = demoMode ? 2  : state.items.filter(i => i.status === "発送待ち").length;
+
+  // NEXT: 発送待ちアイテムを優先表示
+  const nextItem = state.items.find(i => i.status === "発送待ち") || state.items[0];
+
+  // 最近追加したアイテム(最大3件)
+  const recent = [...state.items].sort((a, b) => b.createdAt - a.createdAt).slice(0, 3);
+
+  // 売上集計
+  const now = new Date();
+  const monthSales = demoMode ? 84000 : state.sales
+    .filter(s => { const d = new Date(s.date); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); })
+    .reduce((sum, s) => sum + (s.price || 0), 0);
+
+  // 日付表示
+  const days = ["日","月","火","水","木","金","土"];
+  const dateStr = `${now.getMonth()+1}月${now.getDate()}日 ${days[now.getDay()]}曜日`;
+
+  // SVGアイコン(インライン)
+  const svgPencil = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+  const svgUpload = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>`;
+  const svgTag   = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`;
+  const svgTruck = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`;
+  const svgChev  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B6B6BE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+  const svgBell  = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#262626" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
+
+  // NEXTカード
+  const nextCard = nextItem ? `
+    <div class="hs-next" onclick="openDetail('${nextItem.id}')">
+      ${nextItem.images[0]
+        ? `<img src="${nextItem.images[0]}" class="hs-next-thumb" alt="">`
+        : `<div class="hs-next-thumb hs-next-thumb-empty"></div>`}
+      <div class="hs-next-body">
+        <p class="hs-next-label">NEXT</p>
+        <p class="hs-next-title">${escapeHtml(nextItem.title || "Untitled")} を発送する</p>
+        <p class="hs-next-meta">No.${escapeHtml(nextItem.sku)} · 期限: 明日まで</p>
+      </div>
+      ${svgChev}
+    </div>` : "";
+
+  // 最近追加アイテムカード
+  const recentCards = recent.length
+    ? recent.map(item => `
+        <article class="hs-item-card" onclick="openDetail('${item.id}')">
+          ${item.images[0]
+            ? `<img src="${item.images[0]}" class="hs-item-photo" alt="">`
+            : `<div class="hs-item-photo hs-item-photo-empty"></div>`}
+          <p class="hs-item-sku">No.${escapeHtml(item.sku)}</p>
+          <p class="hs-item-name">${escapeHtml(item.title || "Untitled")}</p>
+          <span class="tag ${statusClass(item.status)}">${escapeHtml(item.status)}</span>
+        </article>`).join("")
+    : `<div class="empty">アイテムを追加するとここに表示されます</div>`;
+
+  $("panel-home").innerHTML = `
+    <div class="home-shell">
+
+      <div class="hs-header">
+        <div>
+          <p class="hs-date">${dateStr}</p>
+          <p class="hs-hello">こんにちは、<b>Ayumi</b> さん</p>
+        </div>
+        <button class="hs-bell" aria-label="通知">${svgBell}</button>
+      </div>
+
+      <h2 class="hs-title">今日の状況</h2>
+
+      ${nextCard}
+
+      <div class="hs-status-list">
+        <button class="hs-status-row" onclick="goToStatusFilter('下書き中')">
+          <span class="hs-status-icon">${svgPencil}</span>
+          <span class="hs-status-name">下書き中</span>
+          <span class="hs-status-num">${draft}</span>
+          ${svgChev}
+        </button>
+        <button class="hs-status-row" onclick="goToStatusFilter('出品待ち')">
+          <span class="hs-status-icon">${svgUpload}</span>
+          <span class="hs-status-name">出品待ち</span>
+          <span class="hs-status-num">${readyList}</span>
+          ${svgChev}
+        </button>
+        <button class="hs-status-row" onclick="goToStatusFilter('出品中')">
+          <span class="hs-status-icon">${svgTag}</span>
+          <span class="hs-status-name">出品中</span>
+          <span class="hs-status-num">${listed}</span>
+          ${svgChev}
+        </button>
+        <button class="hs-status-row hs-status-row-last" onclick="goToStatusFilter('発送待ち')">
+          <span class="hs-status-icon">${svgTruck}</span>
+          <span class="hs-status-name">発送待ち</span>
+          <span class="hs-status-num ${shipping > 0 ? "hs-num-alert" : ""}">${shipping}</span>
+          ${svgChev}
+        </button>
+      </div>
+
+      <div class="hs-sales-row">
+        <span class="hs-sales-label">今月の売上</span>
+        <span class="hs-sales-val">¥${monthSales.toLocaleString()}</span>
+      </div>
+
+      <div class="hs-recent-head">
+        <span class="hs-recent-title">最近追加したアイテム</span>
+        <button class="hs-recent-more" onclick="switchTab('items')">すべて見る</button>
+      </div>
+      <div class="hs-item-grid">
+        ${recentCards}
+      </div>
+
+    </div>
+  `;
+}
+
+function statusCard(label, value, icon) {
+  return `<div class="status-card"><div><div class="label">${label}</div><div class="value">${value}</div></div><div class="status-icon">${iconSvg(icon)}</div></div>`;
+}
+
+function recentRow(item) {
+  return `<article class="recent-card" onclick="openDetail('${item.id}')">
+    ${item.images[0] ? `<img class="thumb" src="${item.images[0]}" alt="">` : `<div class="thumb"></div>`}
+    <div class="meta">No.${escapeHtml(item.sku)}</div>
+    <div class="title">${escapeHtml(item.title || "Untitled")}</div>
+    <span class="tag ${statusClass(item.status)}">${escapeHtml(item.status)}</span>
+  </article>`;
+}
+
+function goToStatusFilter(status) {
+  switchTab('items');
+  setTimeout(() => {
+    const fs = $("fs");
+    if (!fs) return;
+    // 新旧ステータス名の両方に対応
+    const map = {
+      "下書き中":  ["下書き中","撮影待ち","採寸待ち","登録待ち"],
+      "出品待ち":  ["出品待ち"],
+      "出品中":    ["出品中"],
+      "発送待ち":  ["発送待ち"]
+    };
+    const targets = map[status] || [status];
+    // まず完全一致のoptionを探す
+    const opt = Array.from(fs.options).find(o => targets.includes(o.value));
+    if (opt) {
+      fs.value = opt.value;
+      renderItemList();
+      return;
+    }
+    // 一致するoptionがなければ全件表示(フィルタなし)のままアイテム一覧に飛ぶ
+    renderItemList();
+  }, 60);
+}
+
+function taskRow(task) {
+  if (!("label" in task)) {
+    return `<div class="todo-row">
+      <input type="checkbox" ${task.done ? "checked" : ""} onchange="toggleTask('${task.id}')">
+      <div><div class="title">${escapeHtml(task.title)}</div><div class="meta">${escapeHtml(task.note || "")}</div></div>
+      <span class="tag ${task.type === "取下げチェック" ? "orange" : "gray"}">${escapeHtml(task.type || "作業")}</span>
+    </div>`;
+  }
+  return `<button type="button" class="task-line" onclick="switchTab('${task.tab || "tasks"}')">
+    <span class="task-check"></span>
+    <span class="title">${escapeHtml(task.label || task.title)}</span>
+    <span class="task-count">${Number(task.count || 0)}件 <span class="chevron">›</span></span>
+  </button>`;
+}
+
+function renderAdd() {
+  const item = editingId ? state.items.find(i => i.id === editingId) : null;
+  if (item) currentImages = [...(item.images || [])];
+  if (!editingId && !currentImages.length) currentImages = [];
+  $("panel-add").innerHTML = `
+    <form id="item-form" class="form-card">
+      <div class="section-row"><div><h2>${editingId ? "アイテムを編集" : "アイテムを追加"}</h2><div class="muted">写真、メモ、販売先を一緒に整えます。</div></div><button type="button" class="btn ghost" onclick="clearFormState()">新規に戻す</button></div>
+      <div class="photo-first">
+        <div class="photo-hero">
+          <div class="eyebrow">Start with photo</div>
+          <h2>写真から、販売まで流す。</h2>
+          <p>まずは写真を撮る、または画像を選ぶ。あとから採寸、状態メモ、販売先を整えられます。</p>
+          <div class="photo-actions">
+            <label class="btn primary">画像を選ぶ<input id="f-images-top" type="file" accept="image/*" multiple style="display:none"></label>
+            <button type="button" class="btn ghost" onclick="document.getElementById('f-images-top').click()">写真を撮る</button>
+          </div>
+        </div>
+        <div class="studio-note">
+          <h3>今日の作業メモ</h3>
+          <div class="meta">下書きのままでも保存できます。公開前のメモ帳として使ってください。</div>
+          <div class="chips"><span class="tag orange">撮影</span><span class="tag gray">採寸</span><span class="tag blue">出品</span></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-grid">
+          <div class="field">
+            <label>品番</label>
+            <div class="inline">
+              <input id="f-sku" value="${escapeHtml(item?.sku || previewSku())}" ${state.settings.skuMode === "auto" ? "" : ""}>
+              <button type="button" class="btn small" onclick="setSkuFromSettings()">採番</button>
+            </div>
+            <div class="hint">自動採番、自由入力、プレフィックス設定に対応。</div>
+          </div>
+          <div class="field">
+            <label>ステータス</label>
+            <select id="f-status">${state.settings.statuses.map(s => `<option ${s === (item?.status || "撮影待ち") ? "selected" : ""}>${escapeHtml(s)}</option>`).join("")}</select>
+          </div>
+          <div class="field full">
+            <label>✨ AI自動入力</label>
+            <div class="inline">
+              <select id="f-ai-mode" style="flex:0 0 auto;min-width:150px;">
+                <option value="clothes">洋服モード</option>
+                <option value="parts">パーツ・素材モード</option>
+              </select>
+              <button type="button" class="btn blue" id="btn-ai-analyze" onclick="aiAnalyze()">✨ AIで自動入力</button>
+            </div>
+            <div class="hint">写真（JPEG/PNG）を追加後にタップ。タイトル・素材・説明文を自動生成します。</div>
+          </div>
+          <div class="field full">
+            <label>商品名 / タイトル</label>
+            <div class="inline"><input id="f-title" value="${escapeHtml(item?.title || "")}" placeholder="例: Linen Dress"><button type="button" class="btn small" onclick="autoTitle()">タイトル自動生成</button></div>
+            <div class="hint" id="title-count">0 / 40文字</div>
+          </div>
+          <div class="field"><label>ブランド</label><input id="f-brand" value="${escapeHtml(item?.brand || "")}"></div>
+          <div class="field"><label>カテゴリ</label><input id="f-category" value="${escapeHtml(item?.category || "")}" placeholder="ワンピース / アクセサリー / 食品など"></div>
+          <div class="field"><label>カラー</label><input id="f-color" value="${escapeHtml(item?.color || "")}"></div>
+          <div class="field"><label>素材</label><input id="f-material" value="${escapeHtml(item?.material || "")}"></div>
+          <div class="field"><label>状態</label><select id="f-condition">${["", "新品・未使用", "未使用に近い", "目立つ傷や汚れなし", "やや傷や汚れあり", "傷や汚れあり"].map(v => `<option ${v === (item?.condition || "") ? "selected" : ""}>${v || "選択してください"}</option>`).join("")}</select></div>
+          <div class="field"><label>購入時期</label><input id="f-purchased" value="${escapeHtml(item?.purchased || "")}"></div>
+          <div class="field"><label>購入元</label><input id="f-source" value="${escapeHtml(item?.source || "")}"></div>
+          <div class="field"><label>定価</label><input type="number" id="f-orig-price" value="${escapeHtml(item?.origPrice || "")}"></div>
+          <div class="field"><label>希望販売価格</label><input type="number" id="f-price" value="${escapeHtml(item?.price || "")}"></div>
+          <div class="field"><label>仕入価格 / 原価</label><input type="number" id="f-cost" value="${escapeHtml(item?.cost || "")}"></div>
+          <div class="field"><label>保管場所</label><input id="f-location" value="${escapeHtml(item?.location || "")}" placeholder="棚A-3"></div>
+          <div class="field"><label>担当者</label><input id="f-owner" value="${escapeHtml(item?.owner || "")}" placeholder="Ayumi / 撮影担当など"></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="section-row"><h3>採寸</h3><span class="muted">必要な項目だけ入力</span></div>
+        <div class="measurements">${measurementInputs(item?.measurements || {})}</div>
+      </div>
+      <div class="form-section">
+        <div class="form-grid">
+          <div class="field full"><label>特徴</label><textarea id="f-points" placeholder="1行ずつ特徴を書く">${escapeHtml(item?.points || "")}</textarea></div>
+          <div class="field full"><label>状態メモ</label><textarea id="f-notes">${escapeHtml(item?.notes || "")}</textarea></div>
+          <div class="field full"><label>自分用メモ</label><textarea id="f-private-memo" placeholder="公開文には出さないメモ">${escapeHtml(item?.privateMemo || "")}</textarea></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="section-row"><h3>画像アップロード</h3><span class="muted">スマホ撮影にも対応</span></div>
+        <div class="image-box">
+          <div class="preview-row" id="img-preview"></div>
+          <label class="btn ghost">写真を追加<input id="f-images" type="file" accept="image/*" multiple style="display:none"></label>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="section-row"><h3>販売先管理</h3><button type="button" class="btn small" onclick="addChannelRow()">販売先を追加</button></div>
+        <div id="channel-list" class="channel-list"></div>
+      </div>
+      <div class="form-section">
+        <div class="section-row"><h3>カスタム項目</h3><button type="button" class="btn small" onclick="switchTab('settings')">項目を設定</button></div>
+        <div class="form-grid">${customFieldInputs(item || {})}</div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn blue" onclick="generateAndPreview()">説明文生成</button>
+        <button type="submit" class="btn primary">保存</button>
+      </div>
+      <div id="desc-preview" class="desc-box" style="display:none; margin-top:16px;"></div>
+    </form>
+  `;
+  renderImagePreview();
+  renderChannelRows(item?.channels || [{ channelName: "メルカリ", status: "未出品", url: "", feeRate: 10, fixedFee: 0, shipping: 0, memo: "" }]);
+  $("f-images").addEventListener("change", handleImages);
+  $("f-images-top").addEventListener("change", handleImages);
+  $("item-form").addEventListener("submit", submitItem);
+  $("f-title").addEventListener("input", updateTitleCount);
+  updateTitleCount();
+}
+
+function measurementInputs(m) {
+  const defs = [["sizeLabel","表記サイズ","M / FREE"],["length","総丈","cm"],["bust","身幅","cm"],["waist","ウエスト","cm"],["hip","ヒップ","cm"],["hem","裾幅","cm"],["sleeve","袖丈","cm"],["shoulder","肩幅","cm"],["weight","重さ","g"],["other","その他",""]];
+  return defs.map(([key, label, ph]) => `<div class="field"><label>${label}</label><input id="m-${key}" value="${escapeHtml(m[key] || "")}" placeholder="${ph}"></div>`).join("");
+}
+
+function customFieldInputs(item) {
+  if (!state.customFields.length) return `<div class="field full"><div class="hint">Settingsで「委託先」「作家名」「イベント名」などを追加できます。</div></div>`;
+  return state.customFields.map(f => {
+    const val = item.customValues?.[f.id] || "";
+    if (f.type === "メモ") return `<div class="field full"><label>${escapeHtml(f.label)}</label><textarea data-custom="${f.id}">${escapeHtml(val)}</textarea></div>`;
+    if (f.type === "チェック") return `<div class="field"><label>${escapeHtml(f.label)}</label><select data-custom="${f.id}"><option value="">未設定</option><option ${val === "はい" ? "selected" : ""}>はい</option><option ${val === "いいえ" ? "selected" : ""}>いいえ</option></select></div>`;
+    return `<div class="field"><label>${escapeHtml(f.label)}</label><input data-custom="${f.id}" type="${f.type === "数字" ? "number" : f.type === "日付" ? "date" : "text"}" value="${escapeHtml(val)}"></div>`;
+  }).join("");
+}
+
+function renderChannelRows(rows) {
+  $("channel-list").innerHTML = rows.map((row, index) => channelRow(row, index)).join("");
+}
+
+function channelRow(row, index) {
+  return `<div class="channel-row" data-channel-row>
+    <div class="field"><label>販売先</label><input data-ch="channelName" value="${escapeHtml(row.channelName || "")}" list="channel-options"></div>
+    <div class="field"><label>状態</label><select data-ch="status">${["未出品","出品中","売却済","取下げ済"].map(s => `<option ${s === row.status ? "selected" : ""}>${s}</option>`).join("")}</select></div>
+    <div class="field"><label>URL</label><input data-ch="url" value="${escapeHtml(row.url || "")}"></div>
+    <div class="field"><label>手数料%</label><input data-ch="feeRate" type="number" value="${escapeHtml(row.feeRate || "")}"></div>
+    <div class="field"><label>固定手数料</label><input data-ch="fixedFee" type="number" value="${escapeHtml(row.fixedFee || "")}"></div>
+    <div class="field"><label>送料</label><input data-ch="shipping" type="number" value="${escapeHtml(row.shipping || "")}"></div>
+    <button type="button" class="btn ghost small" onclick="this.closest('[data-channel-row]').remove()">削除</button>
+  </div>`;
+}
+
+function addChannelRow() {
+  $("channel-list").insertAdjacentHTML("beforeend", channelRow({ channelName: "", status: "未出品", url: "", feeRate: 0, fixedFee: 0, shipping: 0 }, Date.now()));
+}
+
+function setSkuFromSettings() {
+  $("f-sku").value = previewSku(true);
+}
+
+function previewSku(consume = false) {
+  const mode = state.settings.skuMode || "auto";
+  let counter = Number(localStorage.getItem(SKU_COUNTER_KEY) || "1");
+  const maxExisting = state.items.reduce((max, item) => {
+    const n = Number(String(item.sku || "").match(/\d+/)?.[0] || 0);
+    return Math.max(max, n + 1);
+  }, 0);
+  counter = Math.max(counter, maxExisting);
+  if (consume) localStorage.setItem(SKU_COUNTER_KEY, String(counter + 1));
+  if (mode === "custom") return "";
+  const digits = Number(state.settings.skuDigits || 4);
+  const num = String(counter).padStart(digits, "0");
+  return mode === "prefix" ? `${state.settings.skuPrefix || "ITEM-"}${num}` : String(counter);
+}
+
+function consumeSkuValue(sku) {
+  const n = Number(String(sku || "").match(/\d+/)?.[0] || 0);
+  if (n) localStorage.setItem(SKU_COUNTER_KEY, String(Math.max(Number(localStorage.getItem(SKU_COUNTER_KEY) || 1001), n + 1)));
+}
+
+// --- 写真キュー & 補正モーダル ---
+let photoQueue = [];
+let photoQueueIdx = 0;
+let photoModalImg = null;
+let photoModalRaf = null;
+
+function handleImages(e) {
+  const files = Array.from(e.target.files);
+  e.target.value = "";
+  if (!files.length) return;
+  photoQueue = files;
+  photoQueueIdx = 0;
+  openPhotoModal(files[0]);
+}
+
+function openPhotoModal(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      photoModalImg = img;
+      $("pm-brightness").value = 0; $("pm-brightness-val").textContent = "0";
+      $("pm-contrast").value = 0;   $("pm-contrast-val").textContent = "0";
+      $("pm-saturation").value = 0; $("pm-saturation-val").textContent = "0";
+      const total = photoQueue.length;
+      $("pm-progress").textContent = total > 1 ? `${photoQueueIdx + 1} / ${total}` : "";
+      $("photo-modal").style.display = "flex";
+      drawPhotoPreview();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateSlider(el) {
+  $(el.id + "-val").textContent = el.value;
+  cancelAnimationFrame(photoModalRaf);
+  photoModalRaf = requestAnimationFrame(drawPhotoPreview);
+}
+
+function drawPhotoPreview() {
+  const canvas = $("pm-canvas");
+  const ctx = canvas.getContext("2d");
+  const img = photoModalImg;
+  if (!img) return;
+  const maxW = Math.min(canvas.parentElement.clientWidth - 48, 500);
+  const maxH = 320;
+  const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+  canvas.width = Math.round(img.width * scale);
+  canvas.height = Math.round(img.height * scale);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  applyPixelCorrections(ctx, canvas.width, canvas.height);
+}
+
+function applyPixelCorrections(ctx, w, h) {
+  const brightness = Number($("pm-brightness").value);
+  const contrast = Number($("pm-contrast").value);
+  const saturation = Number($("pm-saturation").value);
+  if (brightness === 0 && contrast === 0 && saturation === 0) return;
+  const id = ctx.getImageData(0, 0, w, h);
+  const d = id.data;
+  const b = brightness * 2.55;
+  const f = contrast / 100 + 1;
+  for (let i = 0; i < d.length; i += 4) {
+    let r = clampPx(d[i] + b), g = clampPx(d[i+1] + b), bl = clampPx(d[i+2] + b);
+    r = clampPx(128 + (r - 128) * f);
+    g = clampPx(128 + (g - 128) * f);
+    bl = clampPx(128 + (bl - 128) * f);
+    if (saturation !== 0) {
+      const [hh, s, l] = rgbToHsl(r, g, bl);
+      [r, g, bl] = hslToRgb(hh, Math.min(1, Math.max(0, s + saturation / 100)), l);
+    }
+    d[i] = r; d[i+1] = g; d[i+2] = bl;
+  }
+  ctx.putImageData(id, 0, 0);
+}
+
+function clampPx(v) { return Math.min(255, Math.max(0, Math.round(v))); }
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h / 6, s, l];
+}
+
+function hslToRgb(h, s, l) {
+  if (s === 0) { const v = clampPx(l * 255); return [v, v, v]; }
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+  const hue = (t) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  };
+  return [clampPx(hue(h + 1/3) * 255), clampPx(hue(h) * 255), clampPx(hue(h - 1/3) * 255)];
+}
+
+function getCompressedBlob(canvas, quality = 0.85) {
+  return new Promise(resolve => {
+    const tryQ = q => canvas.toBlob(blob => {
+      if (blob.size <= 1024 * 1024 || q <= 0.4) resolve(blob);
+      else tryQ(q - 0.15);
+    }, "image/jpeg", q);
+    tryQ(quality);
+  });
+}
+
+function buildFinalCanvas(img) {
+  const scale = Math.min(1000 / Math.max(img.width, img.height), 1);
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.width * scale);
+  c.height = Math.round(img.height * scale);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+
+async function confirmPhoto() {
+  const canvas = buildFinalCanvas(photoModalImg);
+  applyPixelCorrections(canvas.getContext("2d"), canvas.width, canvas.height);
+  const blob = await getCompressedBlob(canvas);
+  const reader = new FileReader();
+  reader.onload = () => { currentImages.push(reader.result); renderImagePreview(); advancePhotoQueue(); };
+  reader.readAsDataURL(blob);
+}
+
+async function skipPhoto() {
+  const canvas = buildFinalCanvas(photoModalImg);
+  const blob = await getCompressedBlob(canvas);
+  const reader = new FileReader();
+  reader.onload = () => { currentImages.push(reader.result); renderImagePreview(); advancePhotoQueue(); };
+  reader.readAsDataURL(blob);
+}
+
+function advancePhotoQueue() {
+  photoQueueIdx++;
+  if (photoQueueIdx < photoQueue.length) openPhotoModal(photoQueue[photoQueueIdx]);
+  else closePhotoModal();
+}
+
+function closePhotoModal() {
+  $("photo-modal").style.display = "none";
+  photoQueue = []; photoQueueIdx = 0; photoModalImg = null;
+}
+
+// --- ZIP ダウンロード ---
+const isRasterImage = (url) => url && (url.startsWith("data:image/jpeg") || url.startsWith("data:image/png"));
+
+async function downloadZip() {
+  const items = state.items.filter(i => i.images && i.images.some(isRasterImage));
+  if (!items.length) { toast("ダウンロードできる写真がありません（カメラで撮った写真を追加してください）"); return; }
+  if (typeof JSZip === "undefined") { toast("JSZipの読み込みに失敗しました"); return; }
+  toast("ZIPを生成中…");
+  const zip = new JSZip();
+  let fileCount = 0;
+  items.forEach(item => {
+    const no = item.sku;
+    let photoIdx = 0;
+    item.images.forEach(dataUrl => {
+      if (!isRasterImage(dataUrl)) return;
+      const base64 = dataUrl.split(",")[1];
+      const ext = dataUrl.startsWith("data:image/png") ? "png" : "jpg";
+      const name = photoIdx === 0 ? `main.${ext}` : `detail${photoIdx}.${ext}`;
+      zip.file(`${no}/${name}`, base64, { base64: true });
+      photoIdx++; fileCount++;
+    });
+  });
+  try {
+    const blob = await zip.generateAsync({ type: "blob" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "item-studio-photos.zip";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    toast(`${items.length}商品・${fileCount}枚をZIPにしました 📦`);
+  } catch (err) {
+    toast("ZIPの生成に失敗しました"); console.error(err);
+  }
+}
+
+function renderImagePreview() {
+  const area = $("img-preview");
+  if (!area) return;
+  area.innerHTML = currentImages.map((src, i) => `<div class="preview-thumb"><img src="${src}" alt=""><button type="button" onclick="removeImage(${i})">×</button></div>`).join("");
+}
+
+function removeImage(index) {
+  currentImages.splice(index, 1);
+  renderImagePreview();
+}
+
+function collectItemData() {
+  const customValues = {};
+  document.querySelectorAll("[data-custom]").forEach(el => customValues[el.dataset.custom] = el.value);
+  const channels = Array.from(document.querySelectorAll("[data-channel-row]")).map(row => {
+    const data = {};
+    row.querySelectorAll("[data-ch]").forEach(el => data[el.dataset.ch] = el.value);
+    return data;
+  }).filter(ch => ch.channelName);
+  return normalizeItem({
+    id: editingId || undefined,
+    sku: $("f-sku").value.trim(),
+    title: $("f-title").value.trim(),
+    brand: $("f-brand").value.trim(),
+    category: $("f-category").value.trim(),
+    color: $("f-color").value.trim(),
+    material: $("f-material").value.trim(),
+    condition: $("f-condition").value === "選択してください" ? "" : $("f-condition").value,
+    purchased: $("f-purchased").value.trim(),
+    source: $("f-source").value.trim(),
+    origPrice: $("f-orig-price").value,
+    price: $("f-price").value,
+    cost: $("f-cost").value,
+    measurements: {
+      sizeLabel: $("m-sizeLabel").value.trim(), length: $("m-length").value, bust: $("m-bust").value,
+      waist: $("m-waist").value, hip: $("m-hip").value, hem: $("m-hem").value, sleeve: $("m-sleeve").value,
+      shoulder: $("m-shoulder").value, weight: $("m-weight").value, other: $("m-other").value.trim()
+    },
+    points: $("f-points").value.trim(),
+    notes: $("f-notes").value.trim(),
+    privateMemo: $("f-private-memo").value.trim(),
+    location: $("f-location").value.trim(),
+    owner: $("f-owner").value.trim(),
+    status: $("f-status").value,
+    images: [...currentImages],
+    channels,
+    customValues
+  });
+}
+
+function generateTitle(d) {
+  const parts = [d.brand, d.material && d.category ? d.material.replace(/\d+%?/g, "").trim() + d.category : d.category, d.measurements?.sizeLabel, d.color].filter(Boolean);
+  return parts.join(" ").slice(0, 40);
+}
+
+const AI_API_BASE = "https://item-studio-api.vercel.app";
+
+async function aiAnalyze() {
+  const item = editingId ? state.items.find(i => i.id === editingId) : null;
+  const images = (item ? item.images : currentImages) || [];
+  const rasterImg = images.find(img => img && (img.startsWith("data:image/jpeg") || img.startsWith("data:image/png")));
+
+  if (!rasterImg) {
+    toast("写真を追加してから実行してください（JPEG/PNG画像が必要です）");
+    return;
+  }
+
+  const mode = $("f-ai-mode")?.value || "clothes";
+  const btn = $("btn-ai-analyze");
+  const match = rasterImg.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) { toast("画像フォーマットエラー"); return; }
+  const [, mimeType, imageBase64] = match;
+
+  btn.disabled = true;
+  btn.textContent = "✨ 解析中…";
+
+  try {
+    const res = await fetch(`${AI_API_BASE}/api/ai-analyze`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageBase64, mimeType, mode })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+
+    if (data.title)    { $("f-title").value = data.title; updateTitleCount(); }
+    if (data.category) $("f-category").value = data.category;
+    if (data.brand)    $("f-brand").value = data.brand;
+    if (data.color)    $("f-color").value = data.color;
+    if (data.material) $("f-material").value = data.material;
+    if (data.condition) {
+      const opts = ["新品・未使用", "未使用に近い", "目立つ傷や汚れなし", "やや傷や汚れあり", "傷や汚れあり"];
+      if (opts.includes(data.condition)) $("f-condition").value = data.condition;
+    }
+    if (data.description) $("f-points").value = data.description;
+
+    toast("✅ AIが自動入力しました。確認してから保存してください。");
+  } catch (e) {
+    toast("⚠️ AI解析に失敗しました: " + e.message);
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "✨ AIで自動入力";
+  }
+}
+
+function autoTitle() {
+  const data = collectItemData();
+  $("f-title").value = generateTitle(data);
+  updateTitleCount();
+}
+
+function updateTitleCount() {
+  const el = $("title-count");
+  if (!el || !$("f-title")) return;
+  const len = $("f-title").value.length;
+  el.textContent = `${len} / 40文字`;
+  el.style.color = len > 40 ? "#b43b2b" : "var(--soft)";
+}
+
+function generateDescription(d) {
+  const m = d.measurements || {};
+  const sizeLines = [
+    m.sizeLabel && `表記サイズ: ${m.sizeLabel}`,
+    m.length && `総丈: ${m.length}cm`,
+    m.bust && `身幅: ${m.bust}cm`,
+    m.waist && `ウエスト: ${m.waist}cm`,
+    m.hip && `ヒップ: ${m.hip}cm`,
+    m.hem && `裾幅: ${m.hem}cm`,
+    m.sleeve && `袖丈: ${m.sleeve}cm`,
+    m.shoulder && `肩幅: ${m.shoulder}cm`,
+    m.weight && `重さ: ${m.weight}g`,
+    m.other
+  ].filter(Boolean);
+  return [
+    `No.${d.sku}`,
+    d.title,
+    "",
+    d.points && `特徴\n${d.points}`,
+    d.material && `素材\n${d.material}`,
+    sizeLines.length && `サイズ\n${sizeLines.join("\n")}`,
+    d.condition && `状態\n${d.condition}${d.notes ? "\n" + d.notes : ""}`,
+    "",
+    "写真と説明をご確認のうえ、ご不明点がありましたらお気軽にお問い合わせください。"
+  ].filter(Boolean).join("\n");
+}
+
+function generateAndPreview() {
+  const data = collectItemData();
+  if (!data.title) data.title = generateTitle(data);
+  const desc = generateDescription(data);
+  $("desc-preview").style.display = "block";
+  $("desc-preview").textContent = desc;
+}
+
+function submitItem(e) {
+  e.preventDefault();
+  const data = collectItemData();
+  if (!data.sku) { toast("品番を入力してください"); return; }
+  if (!data.title) data.title = generateTitle(data) || "無題のアイテム";
+  data.description = generateDescription(data);
+  data.updatedAt = Date.now();
+  if (editingId) {
+    const idx = state.items.findIndex(i => i.id === editingId);
+    data.createdAt = state.items[idx]?.createdAt || Date.now();
+    if (idx >= 0) state.items[idx] = data;
+  } else {
+    state.items.unshift(data);
+    consumeSkuValue(data.sku);
+  }
+  save();
+  editingId = "";
+  currentImages = [];
+  toast("アイテムを保存しました");
+  switchTab("items");
+}
+
+function clearFormState() {
+  editingId = "";
+  currentImages = [];
+  renderAdd();
+}
+
+function renderItems() {
+  const statuses = state.settings.statuses;
+  const categories = [...new Set(state.items.map(i => i.category).filter(Boolean))];
+  const locations = [...new Set(state.items.map(i => i.location).filter(Boolean))];
+  const owners = [...new Set(state.items.map(i => i.owner).filter(Boolean))];
+  $("panel-items").innerHTML = `
+    <div class="section-row"><div><h2>アイテム一覧</h2><div class="muted">在庫ではなく、販売まで流す作業中アイテムです。</div></div><button class="btn primary" onclick="switchTab('add')">新規追加</button></div>
+    <div class="filters">
+      <input id="q" placeholder="アイテム名・品番・メモで検索">
+      <select id="fs"><option value="">すべてのステータス</option>${statuses.map(s => `<option>${escapeHtml(s)}</option>`).join("")}</select>
+      <select id="fc"><option value="">カテゴリ</option>${categories.map(s => `<option>${escapeHtml(s)}</option>`).join("")}</select>
+      <select id="fl"><option value="">保管場所</option>${locations.map(s => `<option>${escapeHtml(s)}</option>`).join("")}</select>
+      <select id="fch"><option value="">販売先</option>${state.salesChannels.map(c => `<option>${escapeHtml(c.name)}</option>`).join("")}</select>
+      <select id="fo"><option value="">担当者</option>${owners.map(s => `<option>${escapeHtml(s)}</option>`).join("")}</select>
+    </div>
+    <div id="items-list"></div>
+  `;
+  ["q","fs","fc","fl","fch","fo"].forEach(id => $(id).addEventListener("input", renderItemList));
+  renderItemList();
+}
+
+function renderItemList() {
+  const q = $("q").value.toLowerCase();
+  const fs = $("fs").value, fc = $("fc").value, fl = $("fl").value, fch = $("fch").value, fo = $("fo").value;
+  const rows = state.items.filter(item => {
+    const blob = [item.sku, item.title, item.brand, item.category, item.location, item.privateMemo, item.points].join(" ").toLowerCase();
+    if (q && !blob.includes(q)) return false;
+    if (fs && item.status !== fs) return false;
+    if (fc && item.category !== fc) return false;
+    if (fl && item.location !== fl) return false;
+    if (fo && item.owner !== fo) return false;
+    if (fch && !(item.channels || []).some(ch => ch.channelName === fch)) return false;
+    return true;
+  });
+  $("items-list").innerHTML = rows.length ? `<div class="item-grid">${rows.map(itemCard).join("")}</div>` : `<div class="empty">条件に合うアイテムがありません。</div>`;
+}
+
+function itemCard(item) {
+  const channels = (item.channels || []).filter(ch => ch.channelName).slice(0, 5);
+  return `<article class="item-card card">
+    <div class="photo" onclick="openDetail('${item.id}')">${item.images[0] ? `<img src="${item.images[0]}" alt="">` : ""}<span class="tag ${statusClass(item.status)}" style="position:absolute;left:10px;bottom:10px;">${escapeHtml(item.status)}</span></div>
+    <div class="body">
+      <div class="muted">No.${escapeHtml(item.sku)}</div>
+      <div class="title">${escapeHtml(item.title || "無題のアイテム")}</div>
+      <div class="meta">${escapeHtml(item.location || "保管場所未設定")} / ${escapeHtml(item.owner || "担当未設定")}</div>
+      <div class="chips">${channels.map(ch => `<span class="tag ${ch.status === "出品中" ? "blue" : ch.status === "売却済" ? "orange" : "gray"}">${escapeHtml(ch.channelName)}</span>`).join("")}</div>
+    </div>
+    <div class="foot"><span class="price">${yen(item.price)}</span><button class="btn ghost small" onclick="openDetail('${item.id}')">詳細</button></div>
+  </article>`;
+}
+
+function openDetail(id) {
+  currentDetailId = id;
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  const m = item.measurements || {};
+  const measurementText = m.other || [
+    m.length && `総丈 ${m.length}cm`,
+    m.bust && `身幅 ${m.bust}cm`,
+    m.sleeve && `袖丈 ${m.sleeve}cm`
+  ].filter(Boolean).join(" / ") || "-";
+
+  // タブコンテンツ生成
+  const tabDetail = `
+    <div class="info-list">
+      ${infoRow("カテゴリ", item.category || "-")}
+      ${infoRow("ブランド", item.brand || "-")}
+      ${infoRow("カラー", item.color || "-")}
+      ${infoRow("サイズ", m.sizeLabel || "-")}
+      ${infoRow("採寸", measurementText)}
+      ${infoRow("素材", item.material || "-")}
+      ${infoRow("状態", item.condition || "-")}
+      ${infoRow("メモ", item.notes || item.privateMemo || "-")}
+    </div>`;
+
+  const tabChannels = `
+    <div class="sales-mini" style="margin-top:14px;">
+      ${(item.channels || []).length
+        ? (item.channels || []).map(ch => `
+            <div class="sales-mini-row">
+              <span class="channel-dot">${escapeHtml((ch.channelName || "?").slice(0,1))}</span>
+              <div>
+                <div class="title">${escapeHtml(ch.channelName)}</div>
+                <div class="meta">${ch.url ? `<a href="${escapeHtml(ch.url)}" target="_blank" style="color:var(--blue)">URLを開く</a>` : "URL未設定"}</div>
+              </div>
+              <span class="tag ${ch.status === "出品中" || ch.status === "掲載中" ? "blue" : ch.status === "売却済" ? "orange" : "gray"}">${escapeHtml(ch.status)}</span>
+            </div>`).join("")
+        : `<div class="empty" style="margin-top:14px;">販売先が登録されていません</div>`}
+    </div>
+    <div class="form-grid" style="margin-top:16px;">
+      <div class="field"><label>販売価格</label><input id="sale-price" type="number" value="${escapeHtml(String(item.price || ""))}"></div>
+      <div class="field"><label>販売先</label><select id="sale-channel">${(item.channels || []).map(ch => `<option>${escapeHtml(ch.channelName)}</option>`).join("")}</select></div>
+      <div class="field"><label>販売日</label><input id="sale-date" type="date" value="${todayKey()}"></div>
+      <div class="field"><label>送料</label><input id="sale-shipping" type="number" value="0"></div>
+    </div>`;
+
+  const tabMemo = `
+    <div style="margin-top:14px;">
+      <div class="field">
+        <label>メモ</label>
+        <textarea id="detail-memo-input" style="min-height:120px;">${escapeHtml(item.notes || item.privateMemo || "")}</textarea>
+      </div>
+      <button class="btn primary" style="margin-top:12px;width:100%;" onclick="saveMemo('${item.id}')">メモを保存</button>
+    </div>`;
+
+  $("modal-title").textContent = `No.${item.sku}`;
+  $("modal-body").innerHTML = `
+    <div class="detail-studio">
+      <div class="photo-stack">
+        ${item.images[0] ? `<img class="detail-photo" src="${item.images[0]}" alt="">` : `<div class="detail-photo"></div>`}
+        <span class="photo-count">1/${Math.max(item.images.length, 1)}</span>
+      </div>
+      <div>
+        <div class="detail-top">
+          <button class="btn ghost small" onclick="closeModal()">戻る</button>
+          <div class="detail-no">No.${escapeHtml(item.sku)}</div>
+          <button class="btn ghost small" onclick="editItem('${item.id}')">編集</button>
+        </div>
+        <h2 class="detail-title">${escapeHtml(item.title || "Untitled")}</h2>
+        <div class="chips">
+          <span class="tag ${statusClass(item.status)}">${escapeHtml(item.status)}</span>
+          ${item.location ? `<span class="tag gray">${escapeHtml(item.location)}</span>` : ""}
+        </div>
+        <div class="detail-tabs" id="detail-tabs">
+          <button class="active" data-tab="detail">詳細情報</button>
+          <button data-tab="channels">販売先</button>
+          <button data-tab="memo">メモ</button>
+        </div>
+        <div id="detail-tab-content">${tabDetail}</div>
+        <div class="detail-actions">
+          <button type="button" onclick="duplicateItem('${item.id}')">
+            <span class="ico">${iconSvg("box")}</span>複製
+          </button>
+          <button type="button" onclick="generateAndCopyDetail('${item.id}')">
+            <span class="ico">${iconSvg("pen")}</span>説明文生成
+          </button>
+          <button type="button" onclick="shareItem('${item.id}')">
+            <span class="ico">${iconSvg("plus")}</span>共有
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // タブ切り替えイベント登録
+  const tabContents = { detail: tabDetail, channels: tabChannels, memo: tabMemo };
+  document.querySelectorAll("#detail-tabs button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#detail-tabs button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      $("detail-tab-content").innerHTML = tabContents[btn.dataset.tab] || "";
+    });
+  });
+
+  $("modal-foot").innerHTML = `
+    <button class="btn blue small" onclick="markSold('${item.id}')">売却済みにする</button>
+    <button class="btn ghost small" onclick="deleteItem('${item.id}')">削除する</button>
+  `;
+  $("modal-bg").classList.add("show");
+}
+
+// 🔴修正: 複製機能を正しく実装
+function duplicateItem(id) {
+  const src = state.items.find(i => i.id === id);
+  if (!src) return;
+  const copy = JSON.parse(JSON.stringify(src));
+  copy.id = uid("item");
+  copy.sku = previewSku(true);
+  copy.title = (copy.title || "") + " (複製)";
+  copy.status = "下書き中";
+  copy.createdAt = Date.now();
+  copy.updatedAt = Date.now();
+  state.items.unshift(copy);
+  save();
+  closeModal();
+  toast("複製しました: " + copy.title);
+  renderItems();
+}
+
+// 🔴修正: 共有機能(説明文をクリップボードにコピー)
+function shareItem(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  const text = [
+    item.title,
+    item.description || generateDescription(item),
+    item.price ? `¥${Number(item.price).toLocaleString()}` : ""
+  ].filter(Boolean).join("\n\n");
+  navigator.clipboard.writeText(text).then(() => toast("商品情報をコピーしました"));
+}
+
+// 🟡修正: メモ保存
+function saveMemo(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  const val = $("detail-memo-input")?.value || "";
+  item.notes = val;
+  item.updatedAt = Date.now();
+  save();
+  toast("メモを保存しました");
+}
+
+function infoRow(key, value) {
+  return `<div class="info-row"><div class="key">${escapeHtml(key)}</div><div>${escapeHtml(value)}</div></div>`;
+}
+
+function closeModal() { $("modal-bg").classList.remove("show"); }
+$("modal-close").addEventListener("click", closeModal);
+$("modal-bg").addEventListener("click", e => { if (e.target.id === "modal-bg") closeModal(); });
+
+function editItem(id) {
+  editingId = id;
+  closeModal();
+  switchTab("add");
+}
+
+function deleteItem(id) {
+  if (!confirm("このアイテムを削除しますか？")) return;
+  state.items = state.items.filter(i => i.id !== id);
+  save();
+  closeModal();
+  renderItems();
+  toast("削除しました");
+}
+
+function copyDescription(id) {
+  const item = state.items.find(i => i.id === id);
+  navigator.clipboard.writeText(item.description || generateDescription(item)).then(() => toast("説明文をコピーしました"));
+}
+
+function generateAndCopyDetail(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  item.description = generateDescription(item);
+  item.updatedAt = Date.now();
+  save();
+  navigator.clipboard.writeText(item.description).then(() => toast("説明文を整えてコピーしました"));
+}
+
+function markSold(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  const salePrice = Number($("sale-price").value || item.price || 0);
+  const channelName = $("sale-channel").value;
+  const channel = (item.channels || []).find(ch => ch.channelName === channelName) || {};
+  const fee = Math.round(salePrice * Number(channel.feeRate || 0) / 100) + Number(channel.fixedFee || 0);
+  const shipping = Number($("sale-shipping").value || channel.shipping || 0);
+  const cost = Number(item.cost || item.origPrice || 0);
+  const profit = salePrice - fee - shipping - cost;
+  state.sales.unshift({ id: uid("sale"), itemId: id, sku: item.sku, title: item.title, channelName, salePrice, fee, shipping, cost, profit, date: $("sale-date").value || todayKey() });
+  item.status = "発送待ち";
+  (item.channels || []).forEach(ch => {
+    if (ch.channelName === channelName) ch.status = "売却済";
+    else if (ch.status === "出品中") {
+      state.tasks.unshift({ id: uid("task"), itemId: id, title: `No.${item.sku} ${channelName}売却 → ${ch.channelName}から取下げ`, type: "取下げチェック", note: "他販売先に出品中です。このサイトから削除してください。", done: false, createdAt: Date.now() });
+    }
+  });
+  state.tasks.unshift({ id: uid("task"), itemId: id, title: `No.${item.sku} 発送準備`, type: "発送", note: `${channelName}で売却済み。梱包と発送を進めてください。`, done: false, createdAt: Date.now() });
+  save();
+  closeModal();
+  toast("売却処理と取下げチェックを作成しました");
+  switchTab("tasks");
+}
+
+function renderTasks() {
+  const open = state.tasks.filter(t => !t.done);
+  const done = state.tasks.filter(t => t.done);
+  $("panel-tasks").innerHTML = `
+    <div class="section-row"><div><h2>今日やること</h2><div class="muted">売却後の取下げチェック、採寸待ち、発送待ちをまとめます。</div></div><button class="btn primary" onclick="addManualTask()">手動追加</button></div>
+    <section class="work-panel"><div class="panel-head"><h3>未完了</h3><span class="tag orange">${open.length}</span></div><div class="list">${open.length ? open.map(taskRow).join("") : `<div class="empty">未完了タスクはありません。</div>`}</div></section>
+    <section class="work-panel" style="margin-top:16px;"><div class="panel-head"><h3>完了</h3><span class="tag blue">${done.length}</span></div><div class="list">${done.slice(0, 20).map(taskRow).join("") || `<div class="empty">完了した作業はまだありません。</div>`}</div></section>
+  `;
+}
+
+function addManualTask() {
+  const title = prompt("追加する作業を入力してください");
+  if (!title) return;
+  state.tasks.unshift({ id: uid("task"), title, type: "作業", note: "", done: false, createdAt: Date.now() });
+  save();
+  renderTasks();
+}
+
+function toggleTask(id) {
+  const task = state.tasks.find(t => t.id === id);
+  if (task) task.done = !task.done;
+  save();
+  renderTasks();
+}
+
+function renderTemplates() {
+  $("panel-templates").innerHTML = `
+    <div class="section-row"><div><h2>Templates</h2><div class="muted">出品説明、購入者返信、発送連絡、販売先別テンプレを管理。</div></div><button class="btn primary" onclick="addTemplate()">テンプレ追加</button></div>
+    <div class="template-grid">${state.templates.map(t => `<div class="template-card card">
+      <div class="inline"><select data-tpl-type="${t.id}">${["出品説明","購入者返信","発送連絡","トラブル対応","販売先別"].map(type => `<option ${type === t.type ? "selected" : ""}>${type}</option>`).join("")}</select><button class="btn small" onclick="copyTemplate('${t.id}')">コピー</button></div>
+      <input data-tpl-title="${t.id}" value="${escapeHtml(t.title)}" style="margin-top:10px;">
+      <textarea data-tpl-body="${t.id}">${escapeHtml(t.body)}</textarea>
+      <div class="btn-row"><button class="btn small blue" onclick="saveTemplate('${t.id}')">保存</button><button class="btn ghost small" onclick="deleteTemplate('${t.id}')">削除</button></div>
+    </div>`).join("")}</div>
+  `;
+}
+
+function addTemplate() {
+  state.templates.unshift({ id: uid("tpl"), type: "出品説明", title: "新しいテンプレ", body: "" });
+  save();
+  renderTemplates();
+}
+
+function saveTemplate(id) {
+  const tpl = state.templates.find(t => t.id === id);
+  tpl.type = document.querySelector(`[data-tpl-type="${id}"]`).value;
+  tpl.title = document.querySelector(`[data-tpl-title="${id}"]`).value;
+  tpl.body = document.querySelector(`[data-tpl-body="${id}"]`).value;
+  save();
+  toast("テンプレを保存しました");
+}
+
+function deleteTemplate(id) {
+  state.templates = state.templates.filter(t => t.id !== id);
+  save();
+  renderTemplates();
+}
+
+function copyTemplate(id) {
+  const tpl = state.templates.find(t => t.id === id);
+  navigator.clipboard.writeText(tpl.body).then(() => toast("テンプレをコピーしました"));
+}
+
+function renderSettings() {
+  $("panel-settings").innerHTML = `
+    <div class="section-row"><div><h2>Settings</h2><div class="muted">将来Supabaseへ移しやすい形で、品番・販売先・カスタム項目を管理します。</div></div><button class="btn primary" onclick="saveSettings()">設定を保存</button></div>
+    <div class="two-col">
+      <section class="form-card">
+        <div class="form-section">
+          <h3>品番設定</h3>
+          <div class="form-grid" style="margin-top:14px;">
+            <div class="field"><label>方式</label><select id="set-sku-mode"><option value="auto">自動採番</option><option value="custom">自由入力</option><option value="prefix">プレフィックス設定</option></select></div>
+            <div class="field"><label>プレフィックス</label><input id="set-sku-prefix" value="${escapeHtml(state.settings.skuPrefix || "ITEM-")}"></div>
+            <div class="field"><label>桁数</label><input id="set-sku-digits" type="number" value="${escapeHtml(state.settings.skuDigits || 4)}"></div>
+            <div class="field"><label>開始品番</label><input id="set-sku-next" type="number" min="1" value="${escapeHtml(String(Number(localStorage.getItem(SKU_COUNTER_KEY) || 689)))}"><div class="hint" style="margin-top:4px;font-size:11px;color:var(--soft);">次回採番: ${escapeHtml(previewSku())}</div></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="section-row"><h3>ステータス</h3><span class="muted">カンマ区切り</span></div>
+          <textarea id="set-statuses">${escapeHtml(state.settings.statuses.join(", "))}</textarea>
+        </div>
+      </section>
+      <section class="form-card">
+        <div class="section-row"><h3>販売先一覧</h3><button class="btn small" onclick="addSalesChannelSetting()">追加</button></div>
+        <div id="sales-channel-settings" class="custom-list">${state.salesChannels.map(channelSettingRow).join("")}</div>
+      </section>
+    </div>
+    <section class="form-card" style="margin-top:16px;">
+      <div class="section-row"><h3>カスタム項目</h3><button class="btn small" onclick="addCustomFieldSetting()">追加</button></div>
+      <div id="custom-field-settings" class="custom-list">${state.customFields.map(customFieldRow).join("") || `<div class="hint">例: 委託先、作家名、賞味期限、予約日、材料費、棚番号、イベント名</div>`}</div>
+    </section>
+  `;
+  $("set-sku-mode").value = state.settings.skuMode;
+}
+
+function channelSettingRow(ch) {
+  return `<div class="custom-row" data-sales-setting>
+    <input data-sales-name value="${escapeHtml(ch.name)}">
+    <input data-sales-fee type="number" value="${escapeHtml(ch.defaultFeeRate || 0)}" placeholder="手数料%">
+    <input data-sales-fixed type="number" value="${escapeHtml(ch.fixedFee || 0)}" placeholder="固定手数料">
+    <button class="btn ghost small" onclick="this.closest('[data-sales-setting]').remove()">削除</button>
+  </div>`;
+}
+
+function customFieldRow(f) {
+  return `<div class="custom-row" data-custom-setting>
+    <input data-custom-label value="${escapeHtml(f.label)}">
+    <select data-custom-type>${["文字","数字","日付","選択肢","チェック","メモ"].map(type => `<option ${type === f.type ? "selected" : ""}>${type}</option>`).join("")}</select>
+    <input data-custom-options value="${escapeHtml(f.options || "")}" placeholder="選択肢の場合: A,B,C">
+    <button class="btn ghost small" onclick="this.closest('[data-custom-setting]').remove()">削除</button>
+  </div>`;
+}
+
+function addSalesChannelSetting() {
+  $("sales-channel-settings").insertAdjacentHTML("beforeend", channelSettingRow({ name: "", defaultFeeRate: 0, fixedFee: 0 }));
+}
+
+function addCustomFieldSetting() {
+  $("custom-field-settings").insertAdjacentHTML("beforeend", customFieldRow({ label: "", type: "文字", options: "" }));
+}
+
+function saveSettings() {
+  state.settings.skuMode = $("set-sku-mode").value;
+  state.settings.skuPrefix = $("set-sku-prefix").value || "ITEM-";
+  state.settings.skuDigits = Number($("set-sku-digits").value || 4);
+  const nextSku = Number($("set-sku-next")?.value);
+  if (nextSku > 0) localStorage.setItem(SKU_COUNTER_KEY, String(nextSku));
+  state.settings.statuses = $("set-statuses").value.split(",").map(s => s.trim()).filter(Boolean);
+  state.salesChannels = Array.from(document.querySelectorAll("[data-sales-setting]")).map((row, i) => ({
+    id: "ch-" + i,
+    name: row.querySelector("[data-sales-name]").value.trim(),
+    defaultFeeRate: Number(row.querySelector("[data-sales-fee]").value || 0),
+    fixedFee: Number(row.querySelector("[data-sales-fixed]").value || 0)
+  })).filter(ch => ch.name);
+  state.customFields = Array.from(document.querySelectorAll("[data-custom-setting]")).map(row => ({
+    id: uid("field"),
+    label: row.querySelector("[data-custom-label]").value.trim(),
+    type: row.querySelector("[data-custom-type]").value,
+    options: row.querySelector("[data-custom-options]").value.trim()
+  })).filter(f => f.label);
+  save();
+  toast("設定を保存しました");
+  renderSettings();
+}
+
+load();
+renderNav();
+renderHome();
+</script>
+<datalist id="channel-options">
+  <option value="メルカリ"></option>
+  <option value="BASE"></option>
+  <option value="Etsy"></option>
+  <option value="Instagram"></option>
+  <option value="Mikke bazaar"></option>
+  <option value="委託先"></option>
+  <option value="ラクマ"></option>
+</datalist>
+</body>
+</html>
