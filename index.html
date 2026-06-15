@@ -2560,7 +2560,7 @@ function openDetail(id) {
         ${item.platforms?.base ? "BASEに再出品" : "BASEに出品する"}
       </button>
       <button class="btn" onclick="copyForMinne('${item.id}')" style="min-height:52px;">
-        minneテキストをコピー
+        商品情報をコピー
       </button>
     </div>`;
 
@@ -3133,11 +3133,10 @@ function copyForMinne(id) {
     item.description || generateDescription(item),
     "",
     "【注意事項】",
-    "・ハンドメイド品のため個体差があります",
     "・モニターにより色味が異なる場合があります"
   ].filter(v => v !== null);
   navigator.clipboard.writeText(lines.join("\n"))
-    .then(() => toast("minne用テキストをコピーしました"));
+    .then(() => toast("商品情報をコピーしました"));
 }
 
 // ===== ここまで追加 =====
